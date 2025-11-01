@@ -3,7 +3,7 @@ import discord
 import asyncio
 import random
 from discord.ext import commands
-from discord import app_commands, Member
+from discord import app_commands, Member, User
 from datetime import datetime, timedelta
 from threading import Thread
 from dotenv import load_dotenv
@@ -151,8 +151,8 @@ async def speak(interaction: discord.Interaction,
     )
 @app_commands.describe(user="The user you want to attack",
                        attack="The attack you want to do")
-async def fight(interaction: discord.Interaction, user: Member, attack: str):
-    if user == interaction.client.user:
+async def fight(interaction: discord.Interaction, user: User, attack: str):
+    if user.id == interaction.client.user.id:
         await interaction.response.send_message("😡 Hrmm! *punches you*")
     else:
         await interaction.response.send_message(
@@ -367,4 +367,4 @@ async def on_command_error(ctx, error):
         raise error
 
 
-bot.run(TOKEN)
+bot.run("MTM1NzQ0MDY5Njc1OTM1MzQ3NA.Gs7RjA.LvrQdnesr84D8pK5BllO5SXxKyEmjcbT0KRow4")
