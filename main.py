@@ -236,19 +236,17 @@ async def warn(interaction: discord.Interaction,
     )
 
     warnings = len(warns[user_id])
-    channel = bot.get_channel(1358592562620796981)
 
-    if channel:
-        if 1 < warnings <= 4:
-            time_delta = timedelta(
-                days=1 if warnings == 2 else 7 if warnings == 3 else 3)
-            await user.timeout(time_delta,
-                               reason=f"Received {warnings} warnings.")
-            await channel.send(
-                f"{user.mention} has been timed out for {time_delta.days} day(s)."
-            )
-        if warnings == 5:
-            await user.ban(reason=f"Received {warnings} warns.")
+    if 1 < warnings <= 4:
+        time_delta = timedelta(
+        days=1 if warnings == 2 else 7 if warnings == 3 else 3)
+        await user.timeout(time_delta,
+                           reason=f"Received {warnings} warnings.")
+        await interaction.followup.send(
+            f"{user.mention} has been timed out for {time_delta.days} day(s)."
+        )
+    if warnings == 5:
+        await user.ban(reason=f"Received {warnings} warns.")
 
 
 @bot.tree.command(name="removewarns",
