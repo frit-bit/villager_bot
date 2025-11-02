@@ -206,12 +206,15 @@ async def choice(interaction: discord.Interaction,
     await interaction.response.send_message(f"The bot has picked: {random.choice(choices)}")
 
 
+
 @bot.tree.command(name="warn", description="Warn a user")
 @app_commands.describe(user="The user you want to warn",
-                       reason="The reason for the warn")
+                       reason="The reason for the warn",
+                       amount="The number of warnings to add (default 1)")
 async def warn(interaction: discord.Interaction,
                user: Member,
-               reason: str = None):
+               reason: str = None,
+               amount: int = 1):
 
     # Check if user has permissions or is the bot owner
     is_authorized = (interaction.user.guild_permissions.kick_members
@@ -226,13 +229,20 @@ async def warn(interaction: discord.Interaction,
     user_id = user.id
     prune_old_warns(user_id)  # Remove expired warns
 
+
     if user_id not in warns:
         warns[user_id] = []
 
-    warns[user_id].append(datetime.now())
+    if amount < 1:
+        await interaction.response.send_message(
+            "You must specify a positive integer of warnings.", ephemeral=True)
+        return
+
+    for _ in range(amount):
+        warns[user_id].append(datetime.now())
 
     await interaction.response.send_message(
-        f"⚠️ {user.mention} has been warned. Reason: {reason}. They now have {len(warns[user_id])} warn(s). ⚠️"
+        f"⚠️ {user.mention} has received {amount} warn(s) [Reason: {reason}]. They now have {len(warns[user_id])} warn(s). ⚠️"
     )
 
     warnings = len(warns[user_id])
