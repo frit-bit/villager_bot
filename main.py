@@ -122,6 +122,8 @@ async def checkbalance(interaction: discord.Interaction, user: Member):
             await interaction.followup.send(embed=embed)
 
 
+# Add economy commands here
+
 
 
 @bot.tree.command(name="hello", description="Say hello to the villager!")
