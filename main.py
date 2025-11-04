@@ -2,31 +2,51 @@ import os
 import discord
 import asyncio
 import random
+import aiosqlite
 from discord.ext import commands
 from discord import app_commands, Member, User
 from datetime import datetime, timedelta
-from threading import Thread
-from dotenv import load_dotenv
+from discord.ext import tasks
+#from dotenv import load_dotenv
 
-load_dotenv()
+#load_dotenv()
 
 # Get the bot token from environment variables
 '''TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 if not TOKEN:
     raise ValueError("DISCORD_BOT_TOKEN environment variable is not set.")'''
 
-# In-memory warning storage
-warns = {}
+DB_PATH = "bot_data.db"
+
+async def init_db():
+    async with aiosqlite.connect(DB_PATH) as db:
+        # warnings table
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS economy (
+                user_id INTEGER,
+                guild_id INTEGER,
+                balance INTEGER,
+                PRIMARY KEY (user_id, guild_id, balance)
+                )
+                ''')
 
 
-def prune_old_warns(user_id):
-    if user_id in warns:
-        warns[user_id] = [
-            dt for dt in warns[user_id]
-            if datetime.now() - dt < timedelta(days=7)
-        ]
-        if not warns[user_id]:  # Remove empty lists
-            del warns[user_id]
+async def base_coins(user_id: int, guild_id: int, balance: int):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("INSERT INTO economy (user_id, guild_id, balance) VALUES (?, ?, 10)",
+                         [(user_id, guild_id, balance)]
+                         )
+        await db.commit()
+
+
+async def add_coins(user_id: int, guild_id: int, balance: int):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.executemany(
+            "INSERT INTO economy (user_id, guild_id, balance) VALUES (?, ?, ?)",
+            [(user_id, guild_id, balance)]
+        )
+        await db.commit()
+
 
 
 class Villager(commands.Bot):
@@ -40,8 +60,10 @@ class Villager(commands.Bot):
             owner_id=947551947735576627
         )
 
+
     async def setup_hook(self):
         try:
+            await init_db()
             print("🔄 Syncing commands...")
             self.is_syncing = True  # Set flag when sync starts
             await asyncio.sleep(1)
@@ -52,6 +74,7 @@ class Villager(commands.Bot):
         except Exception as e:
             print(f"❌ Failed to sync commands: {e}")
             self.is_syncing = False  # Make sure to set flag even if sync fails
+    
 
     async def on_ready(self):
         channel = self.get_channel(1366904232317550683)
@@ -68,6 +91,45 @@ class Villager(commands.Bot):
 
 
 bot = Villager()
+
+
+@bot.tree.command(name="checkbalance", description="Check your coin balance")
+@app_commands.describe(user="The user whose balance you want to check.")
+async def checkbalance(interaction: discord.Interaction, user: Member):
+        await interaction.response.defer(thinking=True)
+
+        user_id = user.id
+        guild_id = interaction.guild.id
+
+        async with aiosqlite.connect(DB_PATH) as db:
+            # Check is user exists in database
+            cursor = await db.execute(
+            "SELECT balance FROM economy WHERE user_id = ? and guild_id = ?",
+            (user_id, guild_id)
+            )
+            result = await cursor.fetchone()
+
+            if result is None:
+                await db.execute(
+                "INSERT INTO economy (user_id, guild_id, balance) VALUES (?, ?, ?)",
+                (user_id, guild_id, 10)
+                )
+                await db.commit()
+                balance = 10
+                message = f"Balance: {balance} coins"
+            else:
+                balance = result[0]
+                message = f"Balance: {balance} coins"
+            embed = discord.Embed(
+                title=f"Balance Check for {user}",
+                description=message,
+                color=discord.Color.gold()
+                )
+            embed.set_thumbnail(url=user.display_avatar.url)
+
+            await interaction.followup.send(embed=embed)
+
+
 
 
 @bot.tree.command(name="hello", description="Say hello to the villager!")
@@ -202,130 +264,8 @@ async def choice(interaction: discord.Interaction,
                  choice3:str=None,
                  choice4:str=None,
                  choice5:str=None):
-    choices = [choice1, choice2, choice3, choice4, choice5]
+    choices = [c for c in [choice1, choice2, choice3, choice4, choice5] if c]
     await interaction.response.send_message(f"The bot has picked: {random.choice(choices)}")
-
-
-
-@bot.tree.command(name="warn", description="Warn a user")
-@app_commands.describe(user="The user you want to warn",
-                       reason="The reason for the warn",
-                       amount="The number of warnings to add (default 1)")
-async def warn(interaction: discord.Interaction,
-               user: Member,
-               reason: str = None,
-               amount: int = 1):
-
-    # Check if user has permissions or is the bot owner
-    is_authorized = (interaction.user.guild_permissions.kick_members
-                     or await bot.is_owner(interaction.user))
-
-    if not is_authorized:
-        await interaction.response.send_message(
-            f"Nice try, {interaction.user.mention}, but you don't have permission to use this command.",
-            ephemeral=True)
-        return
-
-    user_id = user.id
-    prune_old_warns(user_id)  # Remove expired warns
-
-
-    if user_id not in warns:
-        warns[user_id] = []
-
-    if amount < 1:
-        await interaction.response.send_message(
-            "You must specify a positive integer of warnings.", ephemeral=True)
-        return
-
-    for _ in range(amount):
-        warns[user_id].append(datetime.now())
-
-    await interaction.response.send_message(
-        f"⚠️ {user.mention} has received {amount} warn(s) [Reason: {reason}]. They now have {len(warns[user_id])} warn(s). ⚠️"
-    )
-
-    warnings = len(warns[user_id])
-
-    if 1 < warnings <= 4:
-        time_delta = timedelta(
-        days=1 if warnings == 2 else 7 if warnings == 3 else 3)
-        await user.timeout(time_delta,
-                           reason=f"Received {warnings} warnings.")
-        await interaction.followup.send(
-            f"{user.mention} has been timed out for {time_delta.days} day(s)."
-        )
-    if warnings == 5:
-        await user.ban(reason=f"Received {warnings} warns.")
-
-
-@bot.tree.command(name="removewarns",
-                  description="Remove a warning from a user.")
-@app_commands.describe(user="The user whose warn you want to remove",
-                       amount="The number of warns to remove")
-async def removewarns(interaction: discord.Interaction, user: Member,
-                      amount: int):
-    await interaction.response.defer(ephemeral=True)
-    user_id = user.id
-    prune_old_warns(user_id)
-
-    if not interaction.user.guild_permissions.kick_members:
-        await interaction.followup.send(
-            f"Nice try, {interaction.user.mention}, but you don't have permission to use this command.",
-            ephemeral=True)
-        return
-
-    if user_id not in warns or len(warns[user_id]) == 0:
-        await interaction.followup.send(
-            f"{user.mention} doesn't have any warns to remove.",
-            ephemeral=True)
-        return
-
-    if amount <= 0:
-        await interaction.followup.send(
-            "You must specify a positive number to remove.", ephemeral=True)
-        return
-
-    if len(warns[user_id]) < amount:
-        await interaction.followup.send(
-            f"{user.mention} only has {len(warns[user_id])} warns, can't remove {amount}.",
-            ephemeral=True)
-        return
-
-    warns[user_id] = warns[user_id][:-amount]
-    if not warns[user_id]:
-        del warns[user_id]
-
-    await interaction.followup.send(
-        f"✅ {amount} warns have been removed from {user.mention}. They now have {len(warns.get(user_id, []))} warns.",
-        ephemeral=True)
-
-
-@bot.tree.command(name="checkwarns",
-                  description="Check how many warnings a user has.")
-@app_commands.describe(user="The user whose warnings you want to check")
-async def checkwarns(interaction: discord.Interaction, user: Member):
-    user_id = user.id
-    prune_old_warns(user_id)
-
-    # Check if user has permissions or is the bot owner
-    is_authorized = (interaction.user.guild_permissions.kick_members
-                     or await bot.is_owner(interaction.user))
-
-    if not is_authorized:
-        await interaction.response.send_message(
-            f"Nice try, {interaction.user.mention}, but you don't have permission to use this command.",
-            ephemeral=True)
-        return
-
-    if user_id not in warns or len(warns[user_id]) == 0:
-        await interaction.response.send_message(
-            f"{user.mention} has no warnings.", ephemeral=True)
-        return
-
-    warnings = len(warns[user_id])
-    await interaction.response.send_message(
-        f"{user.mention} has {warnings} warning(s).", ephemeral=True)
     
 
 @bot.tree.command(name="slap",
