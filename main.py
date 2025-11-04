@@ -31,14 +31,6 @@ async def init_db():
                 ''')
 
 
-async def base_coins(user_id: int, guild_id: int, balance: int):
-    async with aiosqlite.connect(DB_PATH) as db:
-        await db.execute("INSERT INTO economy (user_id, guild_id, balance) VALUES (?, ?, 10)",
-                         [(user_id, guild_id, balance)]
-                         )
-        await db.commit()
-
-
 async def add_coins(user_id: int, guild_id: int, balance: int):
     async with aiosqlite.connect(DB_PATH) as db:
         await db.executemany(
