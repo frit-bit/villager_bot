@@ -26,7 +26,7 @@ async def init_db():
                 user_id INTEGER,
                 guild_id INTEGER,
                 balance INTEGER,
-                PRIMARY KEY (user_id, guild_id, balance)
+                PRIMARY KEY (user_id, guild_id)
                 )
                 ''')
 
@@ -96,7 +96,7 @@ async def checkbalance(interaction: discord.Interaction, user: Member):
         async with aiosqlite.connect(DB_PATH) as db:
             # Check is user exists in database
             cursor = await db.execute(
-            "SELECT balance FROM economy WHERE user_id = ? and guild_id = ?",
+            "SELECT balance FROM economy WHERE user_id = ? AND guild_id = ?",
             (user_id, guild_id)
             )
             result = await cursor.fetchone()
@@ -108,6 +108,14 @@ async def checkbalance(interaction: discord.Interaction, user: Member):
                 )
                 await db.commit()
                 balance = 10
+                message = f"Balance: {balance} coins"
+            elif result[0] == 0:
+                await db.execute(
+                "UPDATE economy SET balance = ? WHERE user_id = ? AND guild_id = ?",
+                (1, user_id, guild_id)
+                )
+                await db.commit()
+                balance = 1
                 message = f"Balance: {balance} coins"
             else:
                 balance = result[0]
@@ -121,8 +129,76 @@ async def checkbalance(interaction: discord.Interaction, user: Member):
 
             await interaction.followup.send(embed=embed)
 
-
 # Add economy commands here
+@bot.tree.command(name="gamble", description="This is pretty self-explanatory")
+@app_commands.describe(amount="How many coins you want to bet", multiplier="How much to multiply your earnings/loss by")
+async def gamble(interaction: discord.Interaction, amount: int, multiplier: int):
+    await interaction.response.defer(thinking=True)
+
+    user = interaction.user
+    user_id = user.id
+    guild_id = interaction.guild.id
+    bet = amount * multiplier
+
+    async with aiosqlite.connect(DB_PATH) as db:
+        cursor = await db.execute(
+            "SELECT balance FROM economy WHERE user_id = ? AND guild_id = ?",
+            (user_id, guild_id)
+        )
+        balance_row = await cursor.fetchone()
+        if balance_row is None:
+            # User not in DB, give starting balance
+            await db.execute(
+                "INSERT INTO economy (user_id, guild_id, balance) VALUES (?, ?, ?)",
+                (user_id, guild_id, 10)
+            )
+            await db.commit()
+            balance = 10
+        else:
+            balance = balance_row[0]
+
+        result = random.choice([1, 1, 2])
+        if bet > balance:
+            errormsg = f"You cannot bet more than what you have! Bet at most {balance}."
+            await interaction.followup.send(errormsg)
+            return
+        else:
+            if result == 1:
+                returnBalance = balance - bet
+                if returnBalance <= 0:
+                    await db.execute(
+                        "UPDATE economy SET balance = ? WHERE user_id = ? AND guild_id = ?",
+                        (1, user_id, guild_id)
+                    )
+                    await db.commit()
+                    returnBalance = 1
+                else:
+                    await db.execute(
+                        "UPDATE economy SET balance = ? WHERE user_id = ? AND guild_id = ?",
+                        (returnBalance, user_id, guild_id)
+                    )
+                    await db.commit()
+                balance = returnBalance
+                embed_title = "You Lost!"
+                msg = f"Loss of {bet} coins\nNew Balance: {returnBalance} coins"
+                embed_color = discord.Color.red()
+            elif result == 2:
+                returnBalance = balance + bet
+                await db.execute(
+                    "UPDATE economy SET balance = ? WHERE user_id = ? AND guild_id = ?",
+                    (returnBalance, user_id, guild_id)
+                )
+                await db.commit()
+                embed_title = "You won!"
+                msg = f"Earnings: {bet} coins\nNew Balance: {returnBalance} coins"
+                embed_color = discord.Color.green()
+        embed = discord.Embed(
+            title=embed_title,
+            description=msg,
+            color=embed_color
+        )
+        embed.set_thumbnail(url=user.display_avatar.url)
+        await interaction.followup.send(embed=embed)
 
 
 
