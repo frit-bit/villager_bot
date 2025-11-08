@@ -129,7 +129,66 @@ async def checkbalance(interaction: discord.Interaction, user: Member):
 
             await interaction.followup.send(embed=embed)
 
-# Add economy commands here
+
+@bot.tree.command(name="addcoins", description="Add coins to a user")
+@app_commands.describe(user="The user who you want to give coins to", amount="How many coins you want to add")
+async def addcoins(interaction: discord.Interaction, user: Member, amount: int):
+    is_authorized = (interaction.user.guild_permissions.kick_members
+                     or await bot.is_owner(interaction.user))
+    if not is_authorized:
+        await interaction.response.send_message(
+            f"Nice try, {interaction.user.mention}, but you don't have permission to use this command.",
+            ephemeral=True)
+        return
+    
+
+    await interaction.response.defer(thinking=True)
+
+    user_id = user.id
+    guild_id = interaction.guild.id
+
+
+
+    async with aiosqlite.connect(DB_PATH) as db:
+
+        if amount<1:
+            interaction.followup.send("You must specify a positive integer!", ephemeral=True)
+            return
+
+        cursor = await db.execute(
+            "SELECT balance FROM economy WHERE user_id = ? AND guild_id = ?",
+            (user_id, guild_id)
+        )
+        result = await cursor.fetchone()
+
+        if result is None:
+            # User not in DB, insert with starting balance
+            new_balance = amount
+            await db.execute(
+                "INSERT INTO economy (user_id, guild_id, balance) VALUES (?, ?, ?)",
+                (user_id, guild_id, new_balance)
+            )
+        else:
+            # User exists, add to their balance
+            new_balance = result[0] + amount
+            await db.execute(
+                "UPDATE economy SET balance = ? WHERE user_id = ? AND guild_id = ?",
+                (new_balance, user_id, guild_id)
+            )
+        await db.commit()
+
+        embed_title = f"Gift to {user}"
+        msg = f"{interaction.user.mention} has added {amount} coins to {user.mention}'s balance!\nThey now have {new_balance} coins."
+        embed = discord.Embed(
+            title=embed_title,
+            description=msg,
+            color=discord.Color.blue()
+        )
+        embed.set_thumbnail(url=user.display_avatar.url)
+
+        await interaction.followup.send(embed=embed)
+
+
 @bot.tree.command(name="gamble", description="This is pretty self-explanatory")
 @app_commands.describe(amount="How many coins you want to bet", multiplier="How much to multiply your earnings/loss by")
 async def gamble(interaction: discord.Interaction, amount: int, multiplier: int):
@@ -157,7 +216,7 @@ async def gamble(interaction: discord.Interaction, amount: int, multiplier: int)
         else:
             balance = balance_row[0]
 
-        result = random.choice([1, 1, 2])
+        result = random.choice([1,2])
         if bet > balance:
             errormsg = f"You cannot bet more than what you have! Bet at most {balance}."
             await interaction.followup.send(errormsg)
@@ -234,7 +293,7 @@ async def serverinfo(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 
-@bot.tree.command(name="report",
+'''@bot.tree.command(name="report",
                   description="Report a small issue to the creator/dev(s)",
                   )
 @app_commands.describe(issue="The issue you want to report.")
@@ -246,7 +305,7 @@ async def report(interaction: discord.Interaction, issue: str):
         f"✅ Your bug has been reported to {owner.name}.", ephemeral=True)
     await dev.send(
         f"{interaction.user} reported a bug in the bot!\nThey said: '" + issue +
-        "'.")
+        "'.")'''
 
 
 @bot.tree.command(name="speak", description="Make the bot say anything")
