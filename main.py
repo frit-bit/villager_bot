@@ -19,8 +19,9 @@ if not TOKEN:
 DB_PATH = "bot_data.db"
 
 async def init_db():
+    print("Initializing Database...")
     async with aiosqlite.connect(DB_PATH) as db:
-        # warnings table
+        # economy table
         await db.execute('''
             CREATE TABLE IF NOT EXISTS economy (
                 user_id INTEGER,
@@ -29,6 +30,7 @@ async def init_db():
                 PRIMARY KEY (user_id, guild_id)
                 )
                 ''')
+        print("Database Initialized Successfully.")
 
 
 async def add_coins(user_id: int, guild_id: int, balance: int):
@@ -55,17 +57,20 @@ class Villager(commands.Bot):
 
     async def setup_hook(self):
         try:
+            print("Starting setup_hook...")
             await init_db()
-            print("🔄 Syncing commands...")
-            self.is_syncing = True  # Set flag when sync starts
-            await asyncio.sleep(1)
-            self.tree.default_permissions = None
-            synced = await self.tree.sync()
-            print(f"✅ Successfully synced {len(synced)} command(s)")
-            self.is_syncing = False  # Set flag when sync completes
+            # print("🔄 Syncing commands...")
+            # self.is_syncing = True  # Set flag when sync starts
+            # wait asyncio.sleep(1)
+            # self.tree.default_permissions = None
+            # synced = await self.tree.sync()
+            # print(f"✅ Successfully synced {len(synced)} command(s)")
+            # self.is_syncing = False  # Set flag when sync completes
+            print("Setup Complete!")
         except Exception as e:
-            print(f"❌ Failed to sync commands: {e}")
-            self.is_syncing = False  # Make sure to set flag even if sync fails
+            print()
+            # print(f"❌ Failed to sync commands: {e}")
+            # self.is_syncing = False  # Make sure to set flag even if sync fails
     
 
     async def on_ready(self):
@@ -444,4 +449,4 @@ async def on_command_error(ctx, error):
         raise error
 
 
-bot.run("MTM1NzQ0MDY5Njc1OTM1MzQ3NA.Gs7RjA.LvrQdnesr84D8pK5BllO5SXxKyEmjcbT0KRow4")
+bot.run("MTM1NzQ0MDY5Njc1OTM1MzQ3NA.Gy4iol.RGhkrpoSiG2sSxnyHheHYZPg7pXkBinsgLjx48")
