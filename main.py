@@ -493,7 +493,7 @@ async def on_message(message):
             # don't log owner's DMs
             await bot.process_commands(message)
             return
-        log_entry = f"The user '{message.author}' ({message.author.id}) DM'ed the bot: '{message.content}'\n"
+        log_entry = f"[{datetime.now}] The user '{message.author}' ({message.author.id}) DM'ed the bot: '{message.content}'\n"
         with open("message_logs.txt", "a", encoding="utf-8") as f:
             f.write(log_entry)
 
