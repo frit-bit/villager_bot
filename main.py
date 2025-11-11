@@ -59,18 +59,18 @@ class Villager(commands.Bot):
         try:
             print("Starting setup_hook...")
             await init_db()
-            # print("🔄 Syncing commands...")
-            # self.is_syncing = True  # Set flag when sync starts
+            print("🔄 Syncing commands...")
+            self.is_syncing = True  # Set flag when sync starts
             # wait asyncio.sleep(1)
-            # self.tree.default_permissions = None
-            # synced = await self.tree.sync()
-            # print(f"✅ Successfully synced {len(synced)} command(s)")
-            # self.is_syncing = False  # Set flag when sync completes
+            self.tree.default_permissions = None
+            synced = await self.tree.sync()
+            print(f"✅ Successfully synced {len(synced)} command(s)")
+            self.is_syncing = False  # Set flag when sync completes
             print("Setup Complete!")
         except Exception as e:
-            print()
-            # print(f"❌ Failed to sync commands: {e}")
-            # self.is_syncing = False  # Make sure to set flag even if sync fails
+            # print()
+            print(f"❌ Failed to sync commands: {e}")
+            self.is_syncing = False  # Make sure to set flag even if sync fails
     
 
     async def on_ready(self):
@@ -157,7 +157,7 @@ async def addcoins(interaction: discord.Interaction, user: Member, amount: int):
     async with aiosqlite.connect(DB_PATH) as db:
 
         if amount<1:
-            interaction.followup.send("You must specify a positive integer!", ephemeral=True)
+            await interaction.followup.send("You must specify a positive integer!", ephemeral=True)
             return
 
         cursor = await db.execute(
@@ -194,15 +194,19 @@ async def addcoins(interaction: discord.Interaction, user: Member, amount: int):
         await interaction.followup.send(embed=embed)
 
 
-@bot.tree.command(name="gamble", description="This is pretty self-explanatory")
-@app_commands.describe(amount="How many coins you want to bet", multiplier="How much to multiply your earnings/loss by")
-async def gamble(interaction: discord.Interaction, amount: int, multiplier: int):
+@bot.tree.command(name="diceroll", description="Roll a 6-sided dice for money!")
+@app_commands.describe(amount="How many coins you want to bet", number="Which side you want to bet on")
+async def diceroll(interaction: discord.Interaction, amount: int, number: int):
+    if number not in [1,2,3,4,5,6]:
+        await interaction.response.send_message("You must select a number from 1-6!", ephemeral=True)
+        return
+
     await interaction.response.defer(thinking=True)
 
     user = interaction.user
     user_id = user.id
     guild_id = interaction.guild.id
-    bet = amount * multiplier
+    bet = amount
 
     async with aiosqlite.connect(DB_PATH) as db:
         cursor = await db.execute(
@@ -228,6 +232,8 @@ async def gamble(interaction: discord.Interaction, amount: int, multiplier: int)
             return
         else:
             if result == 1:
+                lossArray = [n for n in range (1,7) if n!= number]
+                lossNumber = random.choice(lossArray)
                 returnBalance = balance - bet
                 if returnBalance <= 0:
                     await db.execute(
@@ -244,9 +250,10 @@ async def gamble(interaction: discord.Interaction, amount: int, multiplier: int)
                     await db.commit()
                 balance = returnBalance
                 embed_title = "You Lost!"
-                msg = f"Loss of {bet} coins\nNew Balance: {returnBalance} coins"
+                msg = f"The die landed on {lossNumber}\n\nLoss of {bet} coins\nNew Balance: {returnBalance} coins"
                 embed_color = discord.Color.red()
             elif result == 2:
+                winNum = number
                 returnBalance = balance + bet
                 await db.execute(
                     "UPDATE economy SET balance = ? WHERE user_id = ? AND guild_id = ?",
@@ -254,7 +261,7 @@ async def gamble(interaction: discord.Interaction, amount: int, multiplier: int)
                 )
                 await db.commit()
                 embed_title = "You won!"
-                msg = f"Earnings: {bet} coins\nNew Balance: {returnBalance} coins"
+                msg = f"The die landed on {winNum}\n\nEarnings: {bet} coins\nNew Balance: {returnBalance} coins"
                 embed_color = discord.Color.green()
         embed = discord.Embed(
             title=embed_title,
@@ -276,6 +283,21 @@ async def hello(interaction: discord.Interaction):
 async def ping(interaction: discord.Interaction):
     await interaction.response.send_message(
         f"🏓  **Latency:** {round(bot.latency * 1000)} ms  🏓")
+    
+
+@bot.tree.command(name="rng", description="Generate a random number from your range.")
+@app_commands.describe(start="The first number in the range", end="The last number in the range (Default Infinity)")
+async def rng(interaction: discord.Interaction, start: int, end: int = None):
+    rngArray = [n for n in range (start, end)]
+    result = random.choice(rngArray)
+
+    embed = discord.Embed(
+        title="RNG",
+        description=f"The bot has picked {result}.",
+        color=discord.Color.teal()
+    )
+    embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1357513493816934520/1437622427281657856/image.png?ex=6913e9b8&is=69129838&hm=f8903f7ebcc9cf6b913c9dd09ac25e84bce281614f7bd12515b8b85972391337&")
+    await interaction.response.send_message(embed=embed)
 
 
 @bot.tree.command(name="serverinfo",
