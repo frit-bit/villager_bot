@@ -62,7 +62,7 @@ class Villager(commands.Bot):
             print("🔄 Syncing commands...")
             self.is_syncing = True  # Set flag when sync starts
             # wait asyncio.sleep(1)
-            self.tree.default_permissions = None
+            # self.tree.default_permissions = None
             synced = await self.tree.sync()
             print(f"✅ Successfully synced {len(synced)} command(s)")
             self.is_syncing = False  # Set flag when sync completes
@@ -500,4 +500,4 @@ async def on_message(message):
     # always process commands for non-bot messages
     await bot.process_commands(message)
 
-bot.run("MTM1NzQ0MDY5Njc1OTM1MzQ3NA.Gy4iol.RGhkrpoSiG2sSxnyHheHYZPg7pXkBinsgLjx48")
+bot.run("Not gonna put token here")
