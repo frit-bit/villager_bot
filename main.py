@@ -225,7 +225,7 @@ async def diceroll(interaction: discord.Interaction, amount: int, number: int):
         else:
             balance = balance_row[0]
 
-        result = random.choice([1,2])
+        result = random.choice([1,1,2])
         if bet > balance:
             errormsg = f"You cannot bet more than what you have! Bet at most {balance}."
             await interaction.followup.send(errormsg)
