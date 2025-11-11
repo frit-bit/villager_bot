@@ -39,7 +39,17 @@ async def add_coins(user_id: int, guild_id: int, balance: int):
             "INSERT INTO economy (user_id, guild_id, balance) VALUES (?, ?, ?)",
             [(user_id, guild_id, balance)]
         )
-        await db.commit()
+        await db.commit()  
+
+# Clear Message Logs every month
+@tasks.loop(hours=720)
+async def clear_mlogs():
+    try:
+        with open("message_logs.txt", "w", encoding="utf-8") as f:
+            f.write(f"[Logs cleared on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]\n")
+            print("[Message Logs Cleared]")
+    except Exception as e:
+        print(f"[Error Clearing Logs: {e}]")
 
 
 
@@ -73,10 +83,16 @@ class Villager(commands.Bot):
             self.is_syncing = False  # Make sure to set flag even if sync fails
     
 
+
+
     async def on_ready(self):
         channel = self.get_channel(1366904232317550683)
         print(f'✅ {self.user} is ready and online!')
         await self.change_presence(activity=discord.Game(name="Minecraft"))
+
+        if not clear_mlogs.is_running():
+            clear_mlogs.start()
+
         for guild in self.guilds:
             print(
                 f"Connected to guild: {guild.name} (ID: {guild.id}, Member Count: {guild.member_count})"
