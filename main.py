@@ -62,7 +62,7 @@ class Villager(commands.Bot):
             print("🔄 Syncing commands...")
             self.is_syncing = True  # Set flag when sync starts
             # wait asyncio.sleep(1)
-            self.tree.default_permissions = None
+            # self.tree.default_permissions = None
             synced = await self.tree.sync()
             print(f"✅ Successfully synced {len(synced)} command(s)")
             self.is_syncing = False  # Set flag when sync completes
