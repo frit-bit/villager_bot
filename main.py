@@ -213,6 +213,9 @@ async def diceroll(interaction: discord.Interaction, amount: int, number: int):
     if number not in [1,2,3,4,5,6]:
         await interaction.response.send_message("You must select a number from 1-6!", ephemeral=True)
         return
+    if amount <=0:
+        await interaction.response.send_message("You must bet a positive amount of coins!", ephemeral=True)
+        return
 
     await interaction.response.defer(thinking=True)
 
