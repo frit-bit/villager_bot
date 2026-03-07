@@ -28,6 +28,7 @@ async def init_db():
                 user_id INTEGER,
                 guild_id INTEGER,
                 balance INTEGER,
+                job TEXT DEFAULT NULL,
                 PRIMARY KEY (user_id, guild_id)
                 )
                 ''')
@@ -288,6 +289,81 @@ async def diceroll(interaction: discord.Interaction, amount: int, number: int):
         embed.set_thumbnail(url=user.display_avatar.url)
         await interaction.followup.send(embed=embed)
 
+@bot.tree.command(name="work", description="Work for some money!")
+@app_commands.describe(job="Your job (leave blank if you already have one)")
+@app_commands.checks.cooldown(1, 300)
+async def work(interaction:discord.Interaction, job:str=None):
+    await interaction.response.defer(thinking=True)
+
+    user = interaction.user
+    user_id = user.id
+    guild_id = interaction.guild.id
+    
+
+    async with aiosqlite.connect(DB_PATH) as db:
+        
+
+
+        cursor = await db.execute(
+            "SELECT job, balance FROM economy WHERE user_id = ? AND guild_id = ?",
+            (user_id, guild_id)
+            )
+        
+        row = await cursor.fetchone()
+
+
+        if row is None:
+            await db.execute(
+                "INSERT INTO economy (user_id, guild_id, balance) VALUES (?, ?, ?)",
+                (user_id, guild_id, 10)
+            )
+            await db.commit()
+            current_job, balance, new_balance = None, 10, 15
+        else:
+            current_job, balance = row[0], row[1]        
+            new_balance = balance + 5
+        if current_job is None:
+            # Checks if user does not have job
+            if job is None:
+                # checks if user did not input anything for job
+                await interaction.followup.send("Select a job before using this command!", ephemeral=True)
+                return
+            else:
+                await db.execute(
+                    "UPDATE economy SET job = ?, balance = ? WHERE user_id = ? AND guild_id = ?",
+                    (job, balance + 5, user_id, guild_id)
+                )
+                await db.commit()
+                msg = f"You got hired as a {job} person and earned 5 coins on your first day."
+        elif job is not None:
+            # checks if user input a job when they already have one
+            await interaction.followup.send(f"You already have a job as a {current_job}!", ephemeral=True)
+            return
+        else:
+            # if user already has job and used command properly
+            msg = f"You worked as a {current_job} and earned 5 coins."
+
+        await db.execute(
+            "UPDATE economy SET balance = ? WHERE user_id = ? AND guild_id = ?",
+            (new_balance, user_id, guild_id)
+        )
+        await db.commit()
+
+        embed = discord.Embed(
+        title="Work",
+        description=msg,
+        color=discord.Color.yellow()
+        )
+        embed.set_thumbnail(url=user.display_avatar.url)
+        await interaction.followup.send(embed=embed)
+
+@work.error
+async def work_error(interaction:discord.Interaction, error: app_commands.AppCommandError):
+    if isinstance(error, app_commands.CommandOnCooldown):
+        await interaction.response.send_message(
+            f"You cannot work for {error.retry_after / 60:.1f} minutes and {error.retry_after % 60:.1f} seconds",
+            ephemeral=True
+        )
 
 
 @bot.tree.command(name="hello", description="Say hello to the villager!")
@@ -303,8 +379,8 @@ async def ping(interaction: discord.Interaction):
     
 
 @bot.tree.command(name="rng", description="Generate a random number from your range.")
-@app_commands.describe(start="The first number in the range", end="The last number in the range (Default Infinity)")
-async def rng(interaction: discord.Interaction, start: int, end: int = None):
+@app_commands.describe(start="The first number in the range", end="The last number in the range")
+async def rng(interaction: discord.Interaction, start: int, end: int):
     rngArray = [n for n in range (start, end)]
     result = random.choice(rngArray)
 

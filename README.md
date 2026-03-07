@@ -9,6 +9,7 @@ A multipurpose Discord bot built with `discord.py`, featuring an economy system,
 ## Features
 
 - 🪙 **Economy System** — Coin balances stored per-user per-server via SQLite
+- 💼 **Jobs** — Work for coins with a 5-minute cooldown
 - 🎲 **Gambling** — Dice roll betting with randomized outcomes
 - 🎱 **Fun Commands** — 8ball, coinflip, RNG, fight, slap, and more
 - 🛠️ **Admin Tools** — Add coins, make the bot speak, sync slash commands
@@ -22,6 +23,7 @@ A multipurpose Discord bot built with `discord.py`, featuring an economy system,
 | Command | Description |
 |---|---|
 | `/checkbalance <user>` | Check a user's coin balance |
+| `/work [job]` | Work for 5 coins *(5-minute cooldown)* |
 | `/addcoins <user> <amount>` | Add coins to a user *(requires Kick Members permission)* |
 | `/diceroll <amount> <number>` | Bet coins on a dice roll (1–6) |
 
@@ -56,6 +58,7 @@ The bot uses a local SQLite database to store economy data.
 - DMs sent to the bot are logged. Logs are cleared every ~30 days.
 - The dice roll is intentionally weighted (win chance is ~33%)
 - Coin balances never drop below 1, so you can keep using the economy commands
+- First time using `/work` requires specifying a job; after that it's locked in
 
 
 
