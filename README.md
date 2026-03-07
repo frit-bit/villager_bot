@@ -55,4 +55,6 @@ The bot uses a local SQLite database to store economy data.
 - The dice roll is intentionally weighted (win chance is ~33%)
 - Coin balances never drop below 1, so you can keep using the economy commands
 
+
+
 # NEW FEATURES COMING SOON!
