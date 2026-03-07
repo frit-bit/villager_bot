@@ -2,6 +2,8 @@
 
 A multipurpose Discord bot built with `discord.py`, featuring an economy system, fun commands, and moderation utilities.
 
+[Official Discord Server Link](https://discord.gg/JArnC4Y2Ug)
+
 ---
 
 ## Features
