@@ -1,0 +1,316 @@
+Connected to guild: Sigma server (ID: 1289122742364540938, Member Count: 3)
+Connected to guild: cool clips (ID: 1299894768310030399, Member Count: 13)
+Connected to guild: villager testing grounds (ID: 1357444595599937607, Member Count: 4)
+Connected to guild: Eyr ekibi (ID: 1366007998723391539, Member Count: 7)
+Connected to guild: Nein (ID: 1366849461246103593, Member Count: 3)
+Connected to guild: Demedein Kingdom (ID: 1366850398752604281, Member Count: 12)
+Connected to guild: Team SubsGazi12 (ID: 1367341937102684180, Member Count: 15)
+Connected to guild: мƗ𝐍𝑒Ćя𝐚ⓕ𝐓 (ID: 1370804988120666282, Member Count: 25)
+Connected to guild: LAND OF VALEN (ID: 1370876299685400657, Member Count: 155)
+Connected to guild: The Village (ID: 1374853524286078986, Member Count: 9)
+Connected to guild: Labor Report Tracker (ID: 1407078320956248164, Member Count: 2)
+Total visible guilds: 16
+[Message Logs Cleared]
+^C%                                                                                                                                                                                               
+(.venv) arnav@Mac villager_bot % clear 
+(.venv) arnav@Mac villager_bot % python main.py
+Traceback (most recent call last):
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/main.py", line 10, in <module>
+    from dotenv import load_dotenv
+ModuleNotFoundError: No module named 'dotenv'
+(.venv) arnav@Mac villager_bot % pip install dotenv
+Collecting dotenv
+  Using cached dotenv-0.9.9-py2.py3-none-any.whl.metadata (279 bytes)
+Collecting python-dotenv (from dotenv)
+  Downloading python_dotenv-1.2.2-py3-none-any.whl.metadata (27 kB)
+Using cached dotenv-0.9.9-py2.py3-none-any.whl (1.9 kB)
+Downloading python_dotenv-1.2.2-py3-none-any.whl (22 kB)
+Installing collected packages: python-dotenv, dotenv
+Successfully installed dotenv-0.9.9 python-dotenv-1.2.2
+(.venv) arnav@Mac villager_bot % python main.py
+2026-03-06 18:41:59 INFO     discord.client logging in using static token
+Traceback (most recent call last):
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/http.py", line 844, in static_login
+    data = await self.request(Route('GET', '/users/@me'))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/http.py", line 778, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 401 Unauthorized (error code: 0): 401: Unauthorized
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/main.py", line 522, in <module>
+    bot.run("TOKEN")
+    ~~~~~~~^^^^^^^^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 933, in run
+    asyncio.run(runner())
+    ~~~~~~~~~~~^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 922, in runner
+    await self.start(token, reconnect=reconnect)
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 850, in start
+    await self.login(token)
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 679, in login
+    data = await self.http.static_login(token)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/http.py", line 848, in static_login
+    raise LoginFailure('Improper token has been passed.') from exc
+discord.errors.LoginFailure: Improper token has been passed.
+(.venv) arnav@Mac villager_bot % /Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/bin/python /Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/main.py
+2026-03-06 18:42:17 INFO     discord.client logging in using static token
+Traceback (most recent call last):
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/http.py", line 844, in static_login
+    data = await self.request(Route('GET', '/users/@me'))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/http.py", line 778, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 401 Unauthorized (error code: 0): 401: Unauthorized
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/main.py", line 522, in <module>
+    bot.run(TOKEN)
+    ~~~~~~~^^^^^^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 933, in run
+    asyncio.run(runner())
+    ~~~~~~~~~~~^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 922, in runner
+    await self.start(token, reconnect=reconnect)
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 850, in start
+    await self.login(token)
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 679, in login
+    data = await self.http.static_login(token)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/http.py", line 848, in static_login
+    raise LoginFailure('Improper token has been passed.') from exc
+discord.errors.LoginFailure: Improper token has been passed.
+(.venv) arnav@Mac villager_bot % /Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/bin/python /Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/main.py
+2026-03-06 18:42:29 INFO     discord.client logging in using static token
+Traceback (most recent call last):
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/http.py", line 844, in static_login
+    data = await self.request(Route('GET', '/users/@me'))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/http.py", line 778, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 401 Unauthorized (error code: 0): 401: Unauthorized
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/main.py", line 522, in <module>
+    bot.run(TOKEN)
+    ~~~~~~~^^^^^^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 933, in run
+    asyncio.run(runner())
+    ~~~~~~~~~~~^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 922, in runner
+    await self.start(token, reconnect=reconnect)
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 850, in start
+    await self.login(token)
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 679, in login
+    data = await self.http.static_login(token)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/http.py", line 848, in static_login
+    raise LoginFailure('Improper token has been passed.') from exc
+discord.errors.LoginFailure: Improper token has been passed.
+(.venv) arnav@Mac villager_bot % /Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/bin/python /Users/arnav/Desktop/Desktop
+Items/Coding/villager/villager_bot/main.py
+2026-03-06 18:51:35 INFO     discord.client logging in using static token
+Traceback (most recent call last):
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/http.py", line 844, in static_login
+    data = await self.request(Route('GET', '/users/@me'))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/http.py", line 778, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 401 Unauthorized (error code: 0): 401: Unauthorized
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/main.py", line 522, in <module>
+    bot.run(TOKEN)
+    ~~~~~~~^^^^^^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 933, in run
+    asyncio.run(runner())
+    ~~~~~~~~~~~^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 922, in runner
+    await self.start(token, reconnect=reconnect)
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 850, in start
+    await self.login(token)
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 679, in login
+    data = await self.http.static_login(token)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/http.py", line 848, in static_login
+    raise LoginFailure('Improper token has been passed.') from exc
+discord.errors.LoginFailure: Improper token has been passed.
+(.venv) arnav@Mac villager_bot % /Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/bin/python /Users/arnav/Desktop/Desktop
+Items/Coding/villager/villager_bot/main.py
+2026-03-06 18:52:24 INFO     discord.client logging in using static token
+Traceback (most recent call last):
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/http.py", line 844, in static_login
+    data = await self.request(Route('GET', '/users/@me'))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/http.py", line 778, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 401 Unauthorized (error code: 0): 401: Unauthorized
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/main.py", line 522, in <module>
+    bot.run(TOKEN)
+    ~~~~~~~^^^^^^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 933, in run
+    asyncio.run(runner())
+    ~~~~~~~~~~~^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 922, in runner
+    await self.start(token, reconnect=reconnect)
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 850, in start
+    await self.login(token)
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 679, in login
+    data = await self.http.static_login(token)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/http.py", line 848, in static_login
+    raise LoginFailure('Improper token has been passed.') from exc
+discord.errors.LoginFailure: Improper token has been passed.
+(.venv) arnav@Mac villager_bot % /Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot
+/.venv/bin/python /Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/main.py
+2026-03-06 19:02:28 INFO     discord.client logging in using static token
+Traceback (most recent call last):
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/http.py", line 844, in static_login
+    data = await self.request(Route('GET', '/users/@me'))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/http.py", line 778, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 401 Unauthorized (error code: 0): 401: Unauthorized
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/main.py", line 522, in <module>
+    bot.run(TOKEN)
+    ~~~~~~~^^^^^^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 933, in run
+    asyncio.run(runner())
+    ~~~~~~~~~~~^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 922, in runner
+    await self.start(token, reconnect=reconnect)
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 850, in start
+    await self.login(token)
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 679, in login
+    data = await self.http.static_login(token)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/http.py", line 848, in static_login
+    raise LoginFailure('Improper token has been passed.') from exc
+discord.errors.LoginFailure: Improper token has been passed.
+(.venv) arnav@Mac villager_bot % /Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot
+/.venv/bin/python /Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/main.py
+MTM1NzQ0MDY5Njc1OTM1MzQ3NA.GS29h5.SNQrDeMiPo6cwrAfaTTNFYJmrOcqGRtHuZygbw
+2026-03-06 19:03:21 INFO     discord.client logging in using static token
+Traceback (most recent call last):
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/http.py", line 844, in static_login
+    data = await self.request(Route('GET', '/users/@me'))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/http.py", line 778, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 401 Unauthorized (error code: 0): 401: Unauthorized
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/main.py", line 523, in <module>
+    bot.run(TOKEN)
+    ~~~~~~~^^^^^^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 933, in run
+    asyncio.run(runner())
+    ~~~~~~~~~~~^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 922, in runner
+    await self.start(token, reconnect=reconnect)
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 850, in start
+    await self.login(token)
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/client.py", line 679, in login
+    data = await self.http.static_login(token)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/arnav/Desktop/DesktopItems/Coding/villager/villager_bot/.venv/lib/python3.13/site-packages/discord/http.py", line 848, in static_login
+    raise LoginFailure('Improper token has been passed.') from exc
+discord.errors.LoginFailure: Improper token has been passed.
+(.venv) arnav@Mac villager_bot % ls -la
+total 240
+drwxr-xr-x@ 13 arnav  staff    416 Mar  6 19:03 .
+drwxr-xr-x@  8 arnav  staff    256 Mar  6 19:03 ..
+-rw-r--r--@  1 arnav  staff     90 Mar  6 19:02 .env
+drwxr-xr-x@ 16 arnav  staff    512 Mar  6 18:38 .git
+-rw-r--r--@  1 arnav  staff     81 Mar  6 18:37 .gitignore
+drwxr-xr-x@  7 arnav  staff    224 Mar  6 18:40 .venv
+-rw-r--r--@  1 arnav  staff  12288 Nov 10 20:34 bot_data.db
+-rw-------@  1 arnav  staff  21346 Mar  6 18:45 main 2.py
+-rw-r--r--@  1 arnav  staff  21260 Mar  6 19:03 main.py
+-rw-r--r--@  1 arnav  staff     38 Mar  6 18:39 message_logs.txt
+-rw-r--r--@  1 arnav  staff     35 Mar  6 18:45 requirements.txt
+-rw-r--r--@  1 arnav  staff  18623 Mar  6 19:02 terminal-output.txt
+-rw-r--r--@  1 arnav  staff  20707 Nov 11 12:53 tstllms.py
+(.venv) arnav@Mac villager_bot % 

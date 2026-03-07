@@ -7,15 +7,14 @@ from discord.ext import commands
 from discord import app_commands, Member, User
 from datetime import datetime, timedelta
 from discord.ext import tasks
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 
-load_dotenv(override=True)
+#load_dotenv()
 
-# set token env variable
-TOKEN = os.getenv("DISCORD_BOT_TOKEN")
+# Get the bot token from environment variables
+'''TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 if not TOKEN:
-    raise ValueError("DISCORD_BOT_TOKEN environment variable is not set.")
-print(TOKEN)
+    raise ValueError("DISCORD_BOT_TOKEN environment variable is not set.")'''
 
 DB_PATH = "bot_data.db"
 
@@ -520,4 +519,4 @@ async def on_message(message):
     # always process commands for non-bot messages
     await bot.process_commands(message)
 
-bot.run(TOKEN)
+bot.run("MTM1NzQ0MDY5Njc1OTM1MzQ3NA.Gy4iol.RGhkrpoSiG2sSxnyHheHYZPg7pXkBinsgLjx48")
