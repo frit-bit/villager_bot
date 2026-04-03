@@ -12,7 +12,7 @@ A multipurpose Discord bot built with `discord.py`, featuring an economy system,
 - 💼 **Jobs** — Work for coins with a 5-minute cooldown
 - 🎲 **Gambling** — Dice roll betting with randomized outcomes
 - 🎱 **Fun Commands** — 8ball, coinflip, RNG, fight, slap, and more
-- 🛠️ **Admin Tools** — Add coins, make the bot speak, sync slash commands
+- 🛠️ **Admin Tools** — Add coins, make the bot speak, remove coins
 - 📋 **Server Info** — Quick server stats embed
 
 ---

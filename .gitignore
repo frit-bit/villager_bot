@@ -3,7 +3,8 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 .env
-.env.*
+.env.*s
 .DS_Store
 *.db
 bot_data.db
+*.log
