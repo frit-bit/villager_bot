@@ -49,7 +49,7 @@ async def add_coins(user_id: int, guild_id: int, balance: int):
 @tasks.loop(hours=720)
 async def clear_mlogs():
     try:
-        with open("message_logs.txt", "w", encoding="utf-8") as f:
+        with open("message_logs.log", "w", encoding="utf-8") as f:
             f.write(f"[Logs cleared on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]\n")
             print("[Message Logs Cleared]")
     except Exception as e:
@@ -291,7 +291,7 @@ async def diceroll(interaction: discord.Interaction, amount: int, number: int):
         embed.set_thumbnail(url=user.display_avatar.url)
         await interaction.followup.send(embed=embed)
 
-WORK_COOLDOWN = 300  # seconds
+WORK_COOLDOWN = 300 # (seconds)
 
 @bot.tree.command(name="work", description="Work for some money!")
 @app_commands.describe(job="Your job (leave blank if you already have one)")
@@ -581,14 +581,14 @@ async def on_message(message):
     if message.author == bot.user:
         return
 
-    # Only log DMs; skip logging if owner sent the DM
+    # DM logging
     if isinstance(message.channel, discord.DMChannel):
         if message.author.id == bot.owner_id:
             # don't log owner's DMs
             await bot.process_commands(message)
             return
         log_entry = f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] The user '{message.author}' ({message.author.id}) DM'ed the bot: '{message.content}'\n"
-        with open("message_logs.txt", "a", encoding="utf-8") as f:
+        with open("message_logs.log", "a", encoding="utf-8") as f:
             f.write(log_entry)
 
     # always process commands for non-bot messages
