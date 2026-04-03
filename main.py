@@ -169,8 +169,6 @@ async def addcoins(interaction: discord.Interaction, user: Member, amount: int):
     user_id = user.id
     guild_id = interaction.guild.id
 
-
-
     async with aiosqlite.connect(DB_PATH) as db:
 
         if amount<1:
@@ -184,7 +182,7 @@ async def addcoins(interaction: discord.Interaction, user: Member, amount: int):
         result = await cursor.fetchone()
 
         if result is None:
-            # User not in DB, insert with starting balance
+            # User not in DB --> add starting balance
             new_balance = amount
             await db.execute(
                 "INSERT INTO economy (user_id, guild_id, balance) VALUES (?, ?, ?)",
@@ -210,6 +208,58 @@ async def addcoins(interaction: discord.Interaction, user: Member, amount: int):
 
         await interaction.followup.send(embed=embed)
 
+
+@bot.tree.command(name="removecoins", description="Remove coins from a member")
+@app_commands.describe(user="Person you want to remove coins from", amount="How many coins you want to remove")
+async def removecoins(interaction: discord.Interaction, user:Member, amount:int):
+    is_authorized = (interaction.user.guild_permissions.kick_members
+                     or await bot.is_owner(interaction.user))
+    if not is_authorized:
+        await interaction.response.send_message(
+            f"Nice try, {interaction.user.mention}, but you don't have permission to use this command.",
+            ephemeral=True)
+        return
+    
+    if amount<1:
+        await interaction.response.send_message("You must specifiy a positive integer!", ephemeral=True)
+        return
+    
+    await interaction.response.defer(thinking=True)
+
+    userid = user.id
+    guildid = interaction.guild.id
+
+    async with aiosqlite.connect(DB_PATH) as db:
+        cursor = await db.execute(
+        "SELECT balance FROM economy WHERE user_id = ? AND guild_id = ?",
+        (userid, guildid)
+        )
+        result = await cursor.fetchone()
+        if result is None:
+            # User not in DB, insert with starting balance
+            await db.execute(
+                "INSERT INTO economy (user_id, guild_id, balance) VALUES (?, ?, ?)",
+                (userid, guildid, 10)
+            )
+            await interaction.followup.send("User not in database, added with starting balance (10). Use command again to reduce balance.")
+            return
+        else:
+            new_balance = result[0] - amount
+            await db.execute(
+                "UPDATE economy SET balance = ? WHERE user_id = ? AND guild_id = ?",
+                (new_balance, userid, guildid)
+                )
+        await db.commit()
+
+        embed_title = f"Balance Reduction of {user}"
+        msg = f"{interaction.user.mention} has removed {amount} coins from {user.mention}'s balance. They now have {new_balance} coins."
+        embed = discord.Embed(
+            title=embed_title,
+            description=msg,
+            color=discord.Color.red()
+        )
+        embed.set_thumbnail(url=user.display_avatar.url)
+        await interaction.followup.send(embed=embed)
 
 @bot.tree.command(name="diceroll", description="Roll a 6-sided dice for money!")
 @app_commands.describe(amount="How many coins you want to bet", number="Which side you want to bet on")
