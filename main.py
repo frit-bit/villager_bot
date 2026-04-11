@@ -109,47 +109,51 @@ bot = Villager()
 
 @bot.tree.command(name="checkbalance", description="Check your coin balance")
 @app_commands.describe(user="The user whose balance you want to check.")
-async def checkbalance(interaction: discord.Interaction, user: Member):
-        await interaction.response.defer(thinking=True)
+async def checkbalance(interaction: discord.Interaction, user: Member = None):
+    await interaction.response.defer(thinking=True)
 
-        user_id = user.id
-        guild_id = interaction.guild.id
+    if user is None:
+        user = interaction.user
 
-        async with aiosqlite.connect(DB_PATH) as db:
-            # Check is user exists in database
-            cursor = await db.execute(
+    user_id = user.id
+    guild_id = interaction.guild.id
+
+    async with aiosqlite.connect(DB_PATH) as db:
+        # Check if user exists in database
+        cursor = await db.execute(
             "SELECT balance FROM economy WHERE user_id = ? AND guild_id = ?",
             (user_id, guild_id)
-            )
-            result = await cursor.fetchone()
+        )
+        result = await cursor.fetchone()
 
-            if result is None:
-                await db.execute(
+        if result is None:
+            await db.execute(
                 "INSERT INTO economy (user_id, guild_id, balance) VALUES (?, ?, ?)",
                 (user_id, guild_id, 10)
-                )
-                await db.commit()
-                balance = 10
-                message = f"Balance: {balance} coins"
-            elif result[0] == 0:
-                await db.execute(
+            )
+            await db.commit()
+            balance = 10
+            message = f"Balance: {balance} coins"
+        elif result[0] == 0:
+            await db.execute(
                 "UPDATE economy SET balance = ? WHERE user_id = ? AND guild_id = ?",
                 (1, user_id, guild_id)
-                )
-                await db.commit()
-                balance = 1
-                message = f"Balance: {balance} coins"
-            else:
-                balance = result[0]
-                message = f"Balance: {balance} coins"
-            embed = discord.Embed(
-                title=f"Balance Check for {user}",
-                description=message,
-                color=discord.Color.gold()
-                )
-            embed.set_thumbnail(url=user.display_avatar.url)
+            )
+            await db.commit()
+            balance = 1
+            message = f"Balance: {balance} coins"
+        else:
+            balance = result[0]
+            message = f"Balance: {balance} coins"
 
-            await interaction.followup.send(embed=embed)
+        embed = discord.Embed(
+            title=f"Balance Check for {user}",
+            description=message,
+            color=discord.Color.gold()
+        )
+        embed.set_thumbnail(url=user.display_avatar.url)
+
+        await interaction.followup.send(embed=embed)
 
 
 @bot.tree.command(name="addcoins", description="Add coins to a user")
