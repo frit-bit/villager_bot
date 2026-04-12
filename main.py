@@ -34,14 +34,20 @@ async def init_db():
                 PRIMARY KEY (user_id, guild_id)
                 )
                 ''')
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS global_bank (
+                user_id INTEGER PRIMARY KEY,
+                bank_balance INTEGER NOT NULL DEFAULT 0
+                )
+                ''')
         print("Database Initialized Successfully.")
 
 
-async def add_coins(user_id: int, guild_id: int, balance: int):
+async def add_coins(user_id: int, guild_id: int, wallet: int):
     async with aiosqlite.connect(DB_PATH) as db:
         await db.executemany(
             "INSERT INTO economy (user_id, guild_id, balance) VALUES (?, ?, ?)",
-            [(user_id, guild_id, balance)]
+            [(user_id, guild_id, wallet)]
         )
         await db.commit()  
 
@@ -107,9 +113,9 @@ class Villager(commands.Bot):
 bot = Villager()
 
 
-@bot.tree.command(name="checkbalance", description="Check your coin balance")
+@bot.tree.command(name="balance", description="Check someone's coin balance")
 @app_commands.describe(user="The user whose balance you want to check.")
-async def checkbalance(interaction: discord.Interaction, user: Member = None):
+async def checkwallet(interaction: discord.Interaction, user: Member = None):
     await interaction.response.defer(thinking=True)
 
     if user is None:
@@ -119,12 +125,35 @@ async def checkbalance(interaction: discord.Interaction, user: Member = None):
     guild_id = interaction.guild.id
 
     async with aiosqlite.connect(DB_PATH) as db:
-        # Check if user exists in database
+        # Check if user exists in local economy database
         cursor = await db.execute(
             "SELECT balance FROM economy WHERE user_id = ? AND guild_id = ?",
             (user_id, guild_id)
         )
+
+        # Check if user exists in global bank
+        cursorB = await db.execute(
+            "SELECT user_id FROM global_bank WHERE user_id = ?",
+            (user_id,)
+        )
+
         result = await cursor.fetchone()
+        resultB = await cursorB.fetchone()
+
+        if resultB is None:
+            await db.execute(
+                "INSERT INTO global_bank (user_id, bank_balance) VALUES (?, ?)",
+                (user_id, 0)
+            )
+            await db.commit()
+            bBal = 0
+        else:
+            cursorBbal = await db.execute(
+                "SELECT bank_balance FROM global_bank WHERE user_id = ?",
+                (user_id,)
+            )
+            resultBbal = await cursorBbal.fetchone()
+            bBal = resultBbal[0]
 
         if result is None:
             await db.execute(
@@ -132,31 +161,123 @@ async def checkbalance(interaction: discord.Interaction, user: Member = None):
                 (user_id, guild_id, 10)
             )
             await db.commit()
-            balance = 10
-            message = f"Balance: {balance} coins"
+            wallet = 10
+            message = f"{wallet} coins"
         elif result[0] == 0:
-            await db.execute(
-                "UPDATE economy SET balance = ? WHERE user_id = ? AND guild_id = ?",
-                (1, user_id, guild_id)
-            )
-            await db.commit()
-            balance = 1
-            message = f"Balance: {balance} coins"
+            if bBal == 0:
+                await db.execute(
+                    "UPDATE economy SET balance = ? WHERE user_id = ? AND guild_id = ?",
+                    (1, user_id, guild_id)
+                )
+                await db.commit()
+                wallet = 1
+            else:
+                wallet = 0
+            message = f"{wallet} coins"
         else:
-            balance = result[0]
-            message = f"Balance: {balance} coins"
+            wallet = result[0]
+            message = f"{wallet} coins"
 
         embed = discord.Embed(
-            title=f"Balance Check for {user}",
-            description=message,
+            title=f"Total Balance for {user}",
+            description="-# Includes bank and wallet",
             color=discord.Color.gold()
         )
+        embed.add_field(name="Wallet Balance",
+                        value=message,
+                        inline=False
+                        )
+        embed.add_field(name="Bank Balance",
+                        value=f"{bBal} coins",
+                        inline=True
+                        )
+        embed.add_field(name="Total Balance Available Here",
+                        value=f"{bBal + wallet} coins",
+                        inline=False
+                        )
         embed.set_thumbnail(url=user.display_avatar.url)
 
         await interaction.followup.send(embed=embed)
 
 
-@bot.tree.command(name="addcoins", description="Add coins to a user")
+@bot.tree.command(name="deposit", description="Deposit coins to the bank")
+@app_commands.describe(amount="The amount of coins you want to deposit. Leave blank to deposit all")
+async def deposit(interaction: discord.Interaction, amount: int = None):
+    await interaction.response.defer(thinking=True)
+
+    userid = interaction.user.id
+    guildid = interaction.guild.id
+
+    async with aiosqlite.connect(DB_PATH) as db:
+
+        cursor = await db.execute(
+                "SELECT balance FROM economy WHERE user_id = ? AND guild_id = ?",
+                (userid, guildid)
+        )
+
+        result = await cursor.fetchone()
+        
+        cursorB = await db.execute(
+                "SELECT bank_balance FROM global_bank WHERE user_id = ?",
+                (userid,)
+        )
+        
+        resultB = await cursorB.fetchone()
+
+        
+        if result is None:
+            await interaction.followup.send("You have no money! Try working or using another command to get some.")
+            return
+        elif result[0] == 0:
+            if resultB[0] == 0:
+                await interaction.followup.send(
+                "Something in my code has gone horribly wrong and you somehow have 0 coins. Try using another economy command, and if nothing works, then contact staff and they will add coins to your balance."
+                )
+                return
+        else:
+
+            if amount is None:
+                depAmount = result[0]
+                newBal = depAmount + resultB[0]
+            elif amount>result[0]:
+                await interaction.followup.send("You don't have enough money to deposit that much.")
+                return
+            elif amount<=0:
+                await interaction.followup.send("Specify a positive integer to deposit.")
+                return
+            else:
+                depAmount = amount
+                newBal = depAmount + resultB[0]
+        await db.execute(
+                "UPDATE global_bank SET bank_balance = ? WHERE user_id = ?",
+                (newBal, userid)
+                )
+        
+        newWallet = result[0] - depAmount
+        
+        await db.execute(
+                "UPDATE economy SET balance = ? WHERE user_id = ? AND guild_id = ?",
+                (newWallet, userid, guildid)
+                )
+
+        await db.commit()
+
+        embed_title = f"{depAmount} coins deposited to bank"
+        msg = f"{depAmount} coins have been deposited to {interaction.user.mention}'s bank account."
+        embed = discord.Embed(
+                title=embed_title,
+                description=msg,
+                color=discord.Color.green()
+        )
+        embed.set_thumbnail(url=interaction.user.display_avatar.url)
+        
+
+        await interaction.followup.send(embed=embed)
+
+
+
+
+@bot.tree.command(name="addcoins", description="Add coins to a user's wallet")
 @app_commands.describe(user="The user who you want to give coins to", amount="How many coins you want to add")
 async def addcoins(interaction: discord.Interaction, user: Member, amount: int):
     is_authorized = (interaction.user.guild_permissions.kick_members
@@ -186,23 +307,23 @@ async def addcoins(interaction: discord.Interaction, user: Member, amount: int):
         result = await cursor.fetchone()
 
         if result is None:
-            # User not in DB --> add starting balance
-            new_balance = amount
+            # User not in DB --> create starting wallet
+            new_wallet = amount
             await db.execute(
                 "INSERT INTO economy (user_id, guild_id, balance) VALUES (?, ?, ?)",
-                (user_id, guild_id, new_balance)
+                (user_id, guild_id, new_wallet)
             )
         else:
-            # User exists, add to their balance
-            new_balance = result[0] + amount
+            # User exists, add to their wallet
+            new_wallet = result[0] + amount
             await db.execute(
                 "UPDATE economy SET balance = ? WHERE user_id = ? AND guild_id = ?",
-                (new_balance, user_id, guild_id)
+                (new_wallet, user_id, guild_id)
             )
         await db.commit()
 
         embed_title = f"Gift to {user}"
-        msg = f"{interaction.user.mention} has added {amount} coins to {user.mention}'s balance!\nThey now have {new_balance} coins."
+        msg = f"{interaction.user.mention} has added {amount} coins to {user.mention}'s wallet!\nThey now have {new_wallet} coins."
         embed = discord.Embed(
             title=embed_title,
             description=msg,
@@ -213,7 +334,7 @@ async def addcoins(interaction: discord.Interaction, user: Member, amount: int):
         await interaction.followup.send(embed=embed)
 
 
-@bot.tree.command(name="removecoins", description="Remove coins from a member")
+@bot.tree.command(name="removecoins", description="Remove coins from a user's wallet")
 @app_commands.describe(user="Person you want to remove coins from", amount="How many coins you want to remove")
 async def removecoins(interaction: discord.Interaction, user:Member, amount:int):
     is_authorized = (interaction.user.guild_permissions.kick_members
@@ -240,23 +361,23 @@ async def removecoins(interaction: discord.Interaction, user:Member, amount:int)
         )
         result = await cursor.fetchone()
         if result is None:
-            # User not in DB, insert with starting balance
+            # User not in DB, insert with starting wallet
             await db.execute(
                 "INSERT INTO economy (user_id, guild_id, balance) VALUES (?, ?, ?)",
                 (userid, guildid, 10)
             )
-            await interaction.followup.send("User not in database, added with starting balance (10). Use command again to reduce balance.")
+            await interaction.followup.send("User not in database, added with starting wallet (10). Use command again to reduce wallet.")
             return
         else:
-            new_balance = result[0] - amount
+            new_wallet = result[0] - amount
             await db.execute(
                 "UPDATE economy SET balance = ? WHERE user_id = ? AND guild_id = ?",
-                (new_balance, userid, guildid)
+                (new_wallet, userid, guildid)
                 )
         await db.commit()
 
-        embed_title = f"Balance Reduction of {user}"
-        msg = f"{interaction.user.mention} has removed {amount} coins from {user.mention}'s balance. They now have {new_balance} coins."
+        embed_title = f"Wallet Reduction of {user}"
+        msg = f"{interaction.user.mention} has removed {amount} coins from {user.mention}'s wallet. They now have {new_wallet} coins."
         embed = discord.Embed(
             title=embed_title,
             description=msg,
@@ -287,55 +408,54 @@ async def diceroll(interaction: discord.Interaction, amount: int, number: int):
             "SELECT balance FROM economy WHERE user_id = ? AND guild_id = ?",
             (user_id, guild_id)
         )
-        balance_row = await cursor.fetchone()
-        if balance_row is None:
-            # User not in DB, give starting balance
+        wallet_row = await cursor.fetchone()
+        if wallet_row is None:
+            # User not in DB, give starting wallet
             await db.execute(
                 "INSERT INTO economy (user_id, guild_id, balance) VALUES (?, ?, ?)",
                 (user_id, guild_id, 10)
             )
             await db.commit()
-            balance = 10
+            wallet = 10
         else:
-            balance = balance_row[0]
+            wallet = wallet_row[0]
 
         result = random.choice([1,1,2])
-        if bet > balance:
-            errormsg = f"You cannot bet more than what you have! Bet at most {balance}."
+        if bet > wallet:
+            errormsg = f"You cannot bet more than what you have! Bet at most {wallet}."
             await interaction.followup.send(errormsg)
             return
         else:
             if result == 1:
                 lossArray = [n for n in range (1,7) if n!= number]
                 lossNumber = random.choice(lossArray)
-                returnBalance = balance - bet
-                if returnBalance <= 0:
+                updated_wallet = wallet - bet
+                if updated_wallet <= 0:
                     await db.execute(
                         "UPDATE economy SET balance = ? WHERE user_id = ? AND guild_id = ?",
                         (1, user_id, guild_id)
                     )
                     await db.commit()
-                    returnBalance = 1
+                    updated_wallet = 1
                 else:
                     await db.execute(
                         "UPDATE economy SET balance = ? WHERE user_id = ? AND guild_id = ?",
-                        (returnBalance, user_id, guild_id)
+                        (updated_wallet, user_id, guild_id)
                     )
                     await db.commit()
-                balance = returnBalance
                 embed_title = "You Lost!"
-                msg = f"The die landed on {lossNumber}\n\nLoss of {bet} coins\nNew Balance: {returnBalance} coins"
+                msg = f"The die landed on {lossNumber}\n\nLoss of {bet} coins\nNew Wallet Balance: {updated_wallet} coins"
                 embed_color = discord.Color.red()
             elif result == 2:
                 winNum = number
-                returnBalance = balance + bet
+                updated_wallet = wallet + bet
                 await db.execute(
                     "UPDATE economy SET balance = ? WHERE user_id = ? AND guild_id = ?",
-                    (returnBalance, user_id, guild_id)
+                    (updated_wallet, user_id, guild_id)
                 )
                 await db.commit()
                 embed_title = "You won!"
-                msg = f"The die landed on {winNum}\n\nEarnings: {bet} coins\nNew Balance: {returnBalance} coins"
+                msg = f"The die landed on {winNum}\n\nEarnings: {bet} coins\nNew Wallet Balance: {updated_wallet} coins"
                 embed_color = discord.Color.green()
         embed = discord.Embed(
             title=embed_title,
@@ -381,10 +501,10 @@ async def work(interaction: discord.Interaction, job: str = None):
                 (user_id, guild_id, 10)
             )
             await db.commit()
-            current_job, balance, new_balance = None, 10, 15
+            current_job, wallet, new_wallet = None, 10, 15
         else:
-            current_job, balance = row[0], row[1]
-            new_balance = balance + 5
+            current_job, wallet = row[0], row[1]
+            new_wallet = wallet + 5
 
         if current_job is None:
             if job is None:
@@ -393,7 +513,7 @@ async def work(interaction: discord.Interaction, job: str = None):
             else:
                 await db.execute(
                     "UPDATE economy SET job = ?, balance = ? WHERE user_id = ? AND guild_id = ?",
-                    (job, balance + 5, user_id, guild_id)
+                    (job, wallet + 5, user_id, guild_id)
                 )
                 await db.commit()
                 msg = f"You got hired as a {job} person and earned 5 coins on your first day."
@@ -406,7 +526,7 @@ async def work(interaction: discord.Interaction, job: str = None):
         await interaction.response.defer(thinking=True)
         await db.execute(
             "UPDATE economy SET balance = ? WHERE user_id = ? AND guild_id = ?",
-            (new_balance, user_id, guild_id)
+            (new_wallet, user_id, guild_id)
         )
         await db.commit()
 
