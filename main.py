@@ -189,52 +189,16 @@ async def balance(interaction: discord.Interaction, user: Member = None):
             (user_id, guild_id)
         )
 
-        # Check if user exists in global bank
+        result = await cursor.fetchone()
         cursorB = await db.execute(
-            "SELECT user_id FROM global_bank WHERE user_id = ?",
+            "SELECT bank_balance FROM global_bank WHERE user_id = ?",
             (user_id,)
         )
-
-        result = await cursor.fetchone()
         resultB = await cursorB.fetchone()
 
-        if resultB is None:
-            await db.execute(
-                "INSERT INTO global_bank (user_id, bank_balance) VALUES (?, ?)",
-                (user_id, 0)
-            )
-            await db.commit()
-            bBal = 0
-        else:
-            cursorBbal = await db.execute(
-                "SELECT bank_balance FROM global_bank WHERE user_id = ?",
-                (user_id,)
-            )
-            resultBbal = await cursorBbal.fetchone()
-            bBal = resultBbal[0]
-
-        if result is None:
-            await db.execute(
-                "INSERT INTO economy (user_id, guild_id, balance) VALUES (?, ?, ?)",
-                (user_id, guild_id, 10)
-            )
-            await db.commit()
-            wallet = 10
-            message = f"{wallet} coins"
-        elif result[0] == 0:
-            if bBal == 0:
-                await db.execute(
-                    "UPDATE economy SET balance = ? WHERE user_id = ? AND guild_id = ?",
-                    (1, user_id, guild_id)
-                )
-                await db.commit()
-                wallet = 1
-            else:
-                wallet = 0
-            message = f"{wallet} coins"
-        else:
-            wallet = result[0]
-            message = f"{wallet} coins"
+        bBal = 0 if resultB is None else resultB[0]
+        wallet = 0 if result is None else result[0]
+        message = f"{wallet} coins"
 
         embed = discord.Embed(
             title=f"Total Balance for {user}",
@@ -281,22 +245,25 @@ async def deposit(interaction: discord.Interaction, amount: int = None):
         )
         
         resultB = await cursorB.fetchone()
+        bank_balance = 0 if resultB is None else resultB[0]
 
         
         if result is None:
             await interaction.followup.send("You have no money! Try working or using another command to get some.")
             return
         elif result[0] == 0:
-            if resultB[0] == 0:
+            if bank_balance == 0:
                 await interaction.followup.send(
                 "Something in my code has gone horribly wrong and you somehow have 0 coins. Try using another economy command, and if nothing works, then contact staff and they will add coins to your balance."
                 )
                 return
+            await interaction.followup.send("You do not have any wallet coins to deposit.")
+            return
         else:
 
             if amount is None:
                 depAmount = result[0]
-                newBal = depAmount + resultB[0]
+                newBal = depAmount + bank_balance
             elif amount>result[0]:
                 await interaction.followup.send("You don't have enough money to deposit that much.")
                 return
@@ -305,8 +272,15 @@ async def deposit(interaction: discord.Interaction, amount: int = None):
                 return
             else:
                 depAmount = amount
-                newBal = depAmount + resultB[0]
-        await db.execute(
+                newBal = depAmount + bank_balance
+
+        if resultB is None:
+            await db.execute(
+                "INSERT INTO global_bank (user_id, bank_balance) VALUES (?, ?)",
+                (userid, newBal)
+            )
+        else:
+            await db.execute(
                 "UPDATE global_bank SET bank_balance = ? WHERE user_id = ?",
                 (newBal, userid)
                 )
@@ -366,7 +340,7 @@ async def addcoins(interaction: discord.Interaction, user: Member, amount: int):
 
         if result is None:
             # User not in DB --> create starting wallet
-            new_wallet = amount
+            new_wallet = 10 + amount
             await db.execute(
                 "INSERT INTO economy (user_id, guild_id, balance) VALUES (?, ?, ?)",
                 (user_id, guild_id, new_wallet)
@@ -427,7 +401,7 @@ async def removecoins(interaction: discord.Interaction, user:Member, amount:int)
             await interaction.followup.send("User not in database, added with starting wallet (10). Use command again to reduce wallet.")
             return
         else:
-            new_wallet = result[0] - amount
+            new_wallet = max(1, result[0] - amount)
             await db.execute(
                 "UPDATE economy SET balance = ? WHERE user_id = ? AND guild_id = ?",
                 (new_wallet, userid, guildid)
@@ -528,6 +502,8 @@ WORK_COOLDOWN = 300 # (seconds)
 @bot.tree.command(name="work", description="Work for some money!")
 @app_commands.describe(job="Your job (leave blank if you already have one)")
 async def work(interaction: discord.Interaction, job: str = None):
+    await interaction.response.defer(thinking=True)
+
     user = interaction.user
     user_id = user.id
     guild_id = interaction.guild.id
@@ -540,7 +516,7 @@ async def work(interaction: discord.Interaction, job: str = None):
         if remaining > 0:
             mins = int(remaining // 60)
             secs = int(remaining % 60)
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 f"You cannot work for {mins} minutes and {secs} seconds",
                 ephemeral=True
             )
@@ -566,27 +542,26 @@ async def work(interaction: discord.Interaction, job: str = None):
 
         if current_job is None:
             if job is None:
-                await interaction.response.send_message("Select a job before using this command!", ephemeral=True)
+                await interaction.followup.send("Select a job before using this command!", ephemeral=True)
                 return
             else:
+                new_wallet = wallet + 5
                 await db.execute(
                     "UPDATE economy SET job = ?, balance = ? WHERE user_id = ? AND guild_id = ?",
-                    (job, wallet + 5, user_id, guild_id)
+                    (job, new_wallet, user_id, guild_id)
                 )
                 await db.commit()
                 msg = f"You got hired as a {job} person and earned 5 coins on your first day."
         elif job is not None:
-            await interaction.response.send_message(f"You already have a job as a {current_job}!", ephemeral=True)
+            await interaction.followup.send(f"You already have a job as a {current_job}!", ephemeral=True)
             return
         else:
             msg = f"You worked as a {current_job} and earned 5 coins."
-
-        await interaction.response.defer(thinking=True)
-        await db.execute(
-            "UPDATE economy SET balance = ? WHERE user_id = ? AND guild_id = ?",
-            (new_wallet, user_id, guild_id)
-        )
-        await db.commit()
+            await db.execute(
+                "UPDATE economy SET balance = ? WHERE user_id = ? AND guild_id = ?",
+                (new_wallet, user_id, guild_id)
+            )
+            await db.commit()
 
     # set cooldown
     work_cooldowns[key] = datetime.now()
@@ -595,6 +570,36 @@ async def work(interaction: discord.Interaction, job: str = None):
     embed.set_thumbnail(url=user.display_avatar.url)
     await interaction.followup.send(embed=embed)
 
+
+@bot.tree.command(name="resign", description="Resign from your current job")
+async def resign(interaction: discord.Interaction):
+    await interaction.response.defer(thinking=True)
+
+    user_id = interaction.user.id
+    guild_id = interaction.guild.id
+
+    async with aiosqlite.connect(DB_PATH) as db:
+        cursor = await db.execute(
+                "SELECT job FROM economy WHERE user_id = ? AND guild_id = ?",
+                (user_id, guild_id)
+        )
+        jobrow = await cursor.fetchone()
+
+        if jobrow is None or jobrow[0] is None:
+            await interaction.followup.send("You don't have a job to resign from!")
+            return
+        else:
+            oldjob = jobrow[0]
+            await db.execute(
+                    "UPDATE economy SET job = ? WHERE user_id = ? AND guild_id = ?",
+                    (None, user_id, guild_id)
+            )
+            await db.commit()
+            msg = f"{interaction.user.mention} has resigned from their job as a {oldjob}."
+
+        embed = discord.Embed(title="Job Resignation", description=msg, color=discord.Color.red())
+        embed.set_thumbnail(url=interaction.user.display_avatar.url)
+        await interaction.followup.send(embed=embed)
 
 @bot.tree.command(name="hello", description="Say hello to the villager!")
 async def hello(interaction: discord.Interaction):
