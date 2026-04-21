@@ -18,6 +18,7 @@ A multipurpose Discord bot built with `discord.py`, featuring an economy system,
 ---
 
 ## Commands
+-# Run /help to see these details in Discord
 
 ### Economy
 | Command | Description |
