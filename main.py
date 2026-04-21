@@ -585,21 +585,6 @@ async def serverinfo(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 
-'''@bot.tree.command(name="report",
-                  description="Report a small issue to the creator/dev(s)",
-                  )
-@app_commands.describe(issue="The issue you want to report.")
-async def report(interaction: discord.Interaction, issue: str):
-    dev = await bot.fetch_user(947551947735576627)
-    app_info = await bot.application_info()
-    owner = app_info.owner
-    await interaction.response.send_message(
-        f"✅ Your bug has been reported to {owner.name}.", ephemeral=True)
-    await dev.send(
-        f"{interaction.user} reported a bug in the bot!\nThey said: '" + issue +
-        "'.")'''
-
-
 @bot.tree.command(name="speak", description="Make the bot say anything")
 @app_commands.describe(
     message="The message the bot will say.",
