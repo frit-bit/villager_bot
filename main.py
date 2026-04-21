@@ -52,7 +52,7 @@ async def add_coins(user_id: int, guild_id: int, wallet: int):
         await db.commit()  
 
 # Clear Message Logs every month
-@tasks.loop(hours=720)
+@tasks.loop(hours=4380)
 async def clear_mlogs():
     try:
         with open("message_logs.log", "w", encoding="utf-8") as f:

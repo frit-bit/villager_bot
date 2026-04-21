@@ -56,7 +56,7 @@ The bot uses a local SQLite database to store economy data.
 
 ## Notes
 
-- DMs sent to the bot are logged. Logs are cleared every ~30 days.
+- DMs sent to the bot are logged. Logs are cleared every ~6 months, earlier if the bot is restarted.
 - The dice roll is intentionally weighted (win chance is ~33%)
 - Coin wallets never drop below 1, so you can keep using the economy commands
 - First time using `/work` requires specifying a job; after that it's locked in
