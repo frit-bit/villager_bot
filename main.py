@@ -113,9 +113,67 @@ class Villager(commands.Bot):
 bot = Villager()
 
 
+@bot.tree.command(name="help", description="How to use this bot")
+async def help(interaction: discord.Interaction):
+    embed = discord.Embed(
+        title="Villager Bot Help",
+        description="Slash commands currently available in this server.",
+        color=discord.Color.orange()
+    )
+    embed.add_field(
+        name="Economy",
+        value=(
+            "`/balance [user]` Check a wallet and bank total\n"
+            "`/deposit [amount]` Move coins from wallet to bank\n"
+            "`/work [job]` Earn coins with a 5-minute cooldown\n"
+            "`/diceroll <amount> <number>` Bet coins on a dice roll\n"
+            "`/addcoins <user> <amount>` Staff command\n"
+            "`/removecoins <user> <amount>` Staff command"
+        ),
+        inline=False
+    )
+    embed.add_field(
+        name="Fun",
+        value=(
+            "`/hello` Greet the villager\n"
+            "`/coinflip` Flip a coin\n"
+            "`/8ball <question>` Ask the magic 8ball\n"
+            "`/rng <start> <end>` Pick a random number\n"
+            "`/choice <choice1> <choice2> [choice3-5]` Let the bot choose\n"
+            "`/fight <user> <attack>` Fight with a custom move\n"
+            "`/slap <user> <tool>` Slap someone with a hand, fish, or sock"
+        ),
+        inline=False
+    )
+    embed.add_field(
+        name="Utility",
+        value=(
+            "`/ping` Check bot latency\n"
+            "`/serverinfo` View server details\n"
+            "`/speak <message> [channel]` Make the bot speak"
+        ),
+        inline=False
+    )
+    embed.add_field(
+        name="Notes",
+        value=(
+            "Coins are stored per server, but bank balance is global.\n"
+            "Some commands are restricted to staff or the bot owner."
+        ),
+        inline=False
+    )
+    if interaction.guild and interaction.guild.icon:
+        embed.set_thumbnail(url=interaction.guild.icon.url)
+    else:
+        embed.set_thumbnail(url=interaction.client.user.display_avatar.url)
+    embed.set_footer(text="Start typing / in Discord to browse commands and options.")
+
+    await interaction.response.send_message(embed=embed)
+
+
 @bot.tree.command(name="balance", description="Check someone's coin balance")
 @app_commands.describe(user="The user whose balance you want to check.")
-async def checkwallet(interaction: discord.Interaction, user: Member = None):
+async def balance(interaction: discord.Interaction, user: Member = None):
     await interaction.response.defer(thinking=True)
 
     if user is None:
