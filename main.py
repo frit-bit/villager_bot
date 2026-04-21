@@ -191,7 +191,7 @@ async def checkwallet(interaction: discord.Interaction, user: Member = None):
                         value=f"{bBal} coins",
                         inline=True
                         )
-        embed.add_field(name="Total Balance Available Here",
+        embed.add_field(name="Locally Visible Total",
                         value=f"{bBal + wallet} coins",
                         inline=False
                         )
