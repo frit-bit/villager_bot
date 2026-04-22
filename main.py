@@ -42,15 +42,6 @@ async def init_db():
                 ''')
         print("Database Initialized Successfully.")
 
-
-async def add_coins(user_id: int, guild_id: int, wallet: int):
-    async with aiosqlite.connect(DB_PATH) as db:
-        await db.executemany(
-            "INSERT INTO economy (user_id, guild_id, balance) VALUES (?, ?, ?)",
-            [(user_id, guild_id, wallet)]
-        )
-        await db.commit()  
-
 # Clear Message Logs every month
 @tasks.loop(hours=4380)
 async def clear_mlogs():
