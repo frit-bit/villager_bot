@@ -59,7 +59,7 @@ class Villager(commands.Bot):
         intents = discord.Intents.all()
         self.is_syncing = False
         super().__init__(
-            command_prefix='v!',
+            command_prefix='v?',
             intents=intents,
             dm_help=True,
             owner_id=947551947735576627
