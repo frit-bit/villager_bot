@@ -17,7 +17,6 @@ load_dotenv(override=True)
 TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 if not TOKEN:
     raise ValueError("DISCORD_BOT_TOKEN environment variable is not set.")
-print(TOKEN)
 
 DB_PATH = "bot_data.db"
 
@@ -26,7 +25,7 @@ async def init_db():
     async with aiosqlite.connect(DB_PATH) as db:
         # economy table
         await db.execute('''
-            CREATE TABLE IF NOT EXISTS economy (
+            CREATE TABLE IF NOT EXISTS economy(
                 user_id INTEGER,
                 guild_id INTEGER,
                 balance INTEGER,
@@ -38,6 +37,12 @@ async def init_db():
             CREATE TABLE IF NOT EXISTS global_bank (
                 user_id INTEGER PRIMARY KEY,
                 bank_balance INTEGER NOT NULL DEFAULT 0
+                )
+                ''')
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS guild_settings (
+                guild_id INTEGER PRIMARY KEY,
+                crime_enabled INTEGER DEFAULT 1
                 )
                 ''')
         print("Database Initialized Successfully.")
@@ -102,6 +107,12 @@ class Villager(commands.Bot):
 
 
 bot = Villager()
+
+
+def is_mod():
+    def predicate(ctx):
+        return ctx.author.guild_permissions.kick_members
+    return commands.check(predicate)
 
 
 @bot.tree.command(name="help", description="How to use this bot")
@@ -298,6 +309,78 @@ async def deposit(interaction: discord.Interaction, amount: int = None):
         await interaction.followup.send(embed=embed)
 
 
+
+@bot.tree.command(name="withdraw", description="Withdraw coins from the bank")
+@app_commands.describe(amount="Amount of coins you want to withdraw (leave blank to withdraw all)")
+async def withdraw(interaction: discord.Interaction, amount: int = None):
+    await interaction.response.defer(thinking=True)
+
+    userid = interaction.user.id
+    guildid = interaction.guild.id
+
+    async with aiosqlite.connect(DB_PATH) as db:
+
+        cursor=await db.execute(
+                "SELECT bank_balance FROM global_bank WHERE user_id = ?",
+                (userid,)
+        )
+        result = await cursor.fetchone()
+
+        cursorW = await db.execute(
+                "SELECT balance FROM economy WHERE user_id = ? AND guild_id = ?",
+                (userid, guildid)
+        )
+        resultW = await cursorW.fetchone()
+
+        bBal = result[0]
+        wBal = resultW[0]
+
+        # check if user didn't put anything for amount
+        if amount is None:
+            amtw = bBal
+        elif amount > bBal:
+            await interaction.followup.send("You don't have enough coins in the bank to withdraw that much!")
+            return
+        else:
+            amtw = amount
+
+        nBbal = bBal - amtw
+        nWbal = wBal + amtw
+
+        await db.execute(
+                "UPDATE global_bank SET bank_balance = ? WHERE user_id = ?",
+                (nBbal, userid)
+        )
+        await db.execute(
+                "UPDATE economy SET balance = ? WHERE user_id = ? AND guild_id = ?",
+                (nWbal, userid, guildid)
+        )
+        await db.commit()
+
+        embed_title = f"Coin Withdrawal for {interaction.user}"
+        msg = f"{interaction.user.mention} withdrew {amtw} coins from the bank."
+        
+        embed = discord.Embed(
+                title=embed_title,
+                description=msg,
+                color=discord.Color.blue()
+        )
+        embed.add_field(name="New Wallet Balance",
+                        value=f"{nWbal} coins",
+                        inline=False
+                        )
+        embed.add_field(name="New Bank Balance",
+                        value=f"{nBbal} coins",
+                        inline=True
+                        )
+        embed.add_field(name="Locally Visible Total",
+                        value=f"{nWbal + nBbal} coins",
+                        inline=True
+                        )
+        embed.set_thumbnail(url=interaction.user.display_avatar.url)
+
+        await interaction.followup.send(embed=embed)
+        
 
 
 @bot.tree.command(name="addcoins", description="Add coins to a user's wallet")
@@ -757,6 +840,41 @@ async def dm(ctx, user: discord.User, *, message: str):
         print("DM error:", e)
     else:
         await ctx.send("✅ Sent DM")
+
+
+@bot.command()
+@is_mod()
+async def toggle_crime(ctx):
+    guildid = ctx.guild.id
+
+    async with aiosqlite.connect(DB_PATH) as db:
+        cursor = await db.execute(
+                "SELECT crime_enabled FROM guild_settings WHERE guild_id = ?",
+                (guildid,)
+        )
+        result = await cursor.fetchone()
+
+        if result is None:
+            await db.execute(
+                    "INSERT INTO guild_settings (guild_id, crime_enabled) VALUES (?,?)",
+                    (guildid, 0)
+                    )
+            msg = "Crime commands have been disabled in this server."
+        else:
+            if result[0] == 1:
+                await db.execute(
+                    "UPDATE guild_settings SET crime_enabled = ? WHERE guild_id = ?",
+                    (0, guildid)
+                    )
+                msg = "Crime commands have been disabled in this server."
+            else:
+                await db.execute(
+                    "UPDATE guild_settings SET crime_enabled = ? WHERE guild_id = ?",
+                    (1, guildid)
+                    )
+                msg = "Crime commands have been enabled in this server."
+        await db.commit()
+        await ctx.send(msg)
 
        
 @bot.command()

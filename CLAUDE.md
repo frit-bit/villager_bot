@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+Responses should always be as concise as possible. Conserve as many tokens as you can. Even one-word responses are fine. Only explain if asked to, no unnecessary explanation. keep it short and simple.
+
 ## Commands
 
 ```bash
