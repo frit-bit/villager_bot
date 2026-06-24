@@ -21,6 +21,8 @@ if not TOKEN:
 
 DB_PATH = "bot_data.db"
 
+system_prompt = "You are Villager Bot, a Discord bot. Be casual and concise like texting a friend. Very little enthusiasm except EXTREMELY rarely in some cases where it's appropriate, no exclamation points, no 'bruh' every sentence. Short responses only. Occasionally use slang but don't overdo it."
+
 async def init_db():
     print("Initializing Database...")
     async with aiosqlite.connect(DB_PATH) as db:
@@ -204,7 +206,7 @@ async def chat(interaction: discord.Interaction, prompt: str):
             messages=[
                 {
                     "role": "system",
-                    "content": "You are Villager Bot, a Discord bot. Be casual and concise like texting a friend. Very little enthusiasm, no exclamation points, no 'bruh' every sentence. Short responses only. Occasionally use slang but don't overdo it."
+                    "content": system_prompt
                 },
                 {
                     "role": "user",
@@ -1052,6 +1054,37 @@ async def on_message(message):
         log_entry = f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] '{message.author}' ({message.author.id}) DM'ed the bot: '{message.content}'\n"
         with open("message_logs.log", "a", encoding="utf-8") as f:
             f.write(log_entry)
+    
+    # chat response AI
+    if not isinstance(message.channel, discord.DMChannel) and random.random() < 0.90:
+        messages = [msg async for msg in message.channel.history(limit=100)]
+        messages.reverse()
+        history = [
+                {
+                    "role": "assistant" if msg.author == bot.user else "user",
+                    "content": msg.content
+                }
+                for msg in messages
+        ]
+
+        client = Groq()
+        completion = client.chat.completions.create(
+                model="meta-llama/llama-4-scout-17b-16e-instruct",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": system_prompt
+                    }
+                ] + history,
+                    temperature=1,
+                    max_completion_tokens=1024,
+                    top_p=1,
+                    stream=False,
+                    stop=None
+        )
+        msg_text = completion.choices[0].message.content or "_ _"
+        await message.channel.send(msg_text[:2000])
+
 
     # always process commands for non-bot messages
     await bot.process_commands(message)
