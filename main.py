@@ -1056,19 +1056,37 @@ async def on_message(message):
             f.write(log_entry)
     
     # chat response AI
-    if not isinstance(message.channel, discord.DMChannel) and random.random() < 0.10:
-        messages = [msg async for msg in message.channel.history(limit=100)]
-        messages.reverse()
-        history = [
+    bot_mentioned = bot.user in message.mentions
+    replied_message = message.reference.resolved if message.reference else None
+    if message.reference and not replied_message:
+        try:
+            replied_message = await message.channel.fetch_message(message.reference.message_id)
+        except (discord.NotFound, discord.Forbidden, discord.HTTPException) as e:
+            print(f"Could not fetch replied message: {type(e).__name__}: {e}")
+
+    is_reply_to_bot = replied_message and replied_message.author == bot.user
+
+    if not isinstance(message.channel, discord.DMChannel) and (
+        bot_mentioned or is_reply_to_bot or random.random() < 0.10
+    ):
+        try:
+            try:
+                messages = [msg async for msg in message.channel.history(limit=100)]
+                messages.reverse()
+            except discord.Forbidden as e:
+                print(f"Cannot read message history in #{message.channel}: {e}")
+                messages = [message]
+
+            history = [
                 {
                     "role": "assistant" if msg.author == bot.user else "user",
-                    "content": msg.content
+                    "content": msg.content or msg.clean_content or " "
                 }
                 for msg in messages
-        ]
+            ]
 
-        client = Groq()
-        completion = client.chat.completions.create(
+            client = Groq()
+            completion = client.chat.completions.create(
                 model="meta-llama/llama-4-scout-17b-16e-instruct",
                 messages=[
                     {
@@ -1076,14 +1094,16 @@ async def on_message(message):
                         "content": system_prompt
                     }
                 ] + history,
-                    temperature=1,
-                    max_completion_tokens=1024,
-                    top_p=1,
-                    stream=False,
-                    stop=None
-        )
-        msg_text = completion.choices[0].message.content or "_ _"
-        await message.channel.send(msg_text[:2000])
+                temperature=1,
+                max_completion_tokens=1024,
+                top_p=1,
+                stream=False,
+                stop=None
+            )
+            msg_text = completion.choices[0].message.content or "_ _"
+            await message.channel.send(msg_text[:2000])
+        except Exception as e:
+            print(f"AI chat response failed: {type(e).__name__}: {e}")
 
 
     # always process commands for non-bot messages
