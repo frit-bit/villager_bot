@@ -122,7 +122,7 @@ def is_mod():
 async def help(interaction: discord.Interaction):
     embed = discord.Embed(
         title="Villager Bot Help",
-        description="Commands currently available in this server.",
+        description="Commands and chat features currently available in this server.",
         color=discord.Color.orange()
     )
     embed.add_field(
@@ -139,19 +139,23 @@ async def help(interaction: discord.Interaction):
         inline=False
     )
     embed.add_field(
-        name="AI",
-        value="`/chat <prompt>` Ask Villager Bot a question",
+        name="AI Chat",
+        value=(
+            "`/chat <prompt>` Ask Villager Bot a question\n"
+            "Mention the bot or reply to it to chat in a channel\n"
+            "The bot may occasionally respond in normal server chat"
+        ),
         inline=False
     )
     embed.add_field(
         name="Staff and Owner",
         value=(
-            "`/addcoins <user> <amount>` Staff command\n"
-            "`/removecoins <user> <amount>` Staff command\n"
+            "`/addcoins <user> <amount>` Add coins to a wallet\n"
+            "`/removecoins <user> <amount>` Remove coins from a wallet\n"
             "`/speak <message> [channel]` Make the bot speak\n"
-            "`v?toggle_crime` Staff command to enable or disable `/steal`\n"
-            "`v?dm <user> <message>` Owner command\n"
-            "`v?sync` Owner command"
+            "`v?toggle_crime` Enable or disable `/steal` for this server\n"
+            "`v?dm <user> <message>` DM a user as the bot\n"
+            "`v?sync` Manually sync slash commands"
         ),
         inline=False
     )
@@ -181,8 +185,9 @@ async def help(interaction: discord.Interaction):
         name="Notes",
         value=(
             "Coins are stored per server, but bank balance is global.\n"
-            "Crime commands can be toggled per server.\n"
-            "Some commands are restricted to staff or the bot owner."
+            "Only the server owner can toggle crime commands.\n"
+            "Staff commands require Kick Members permission or bot owner.\n"
+            "`v?dm` and `v?sync` are owner-only."
         ),
         inline=False
     )
@@ -976,8 +981,15 @@ async def dm(ctx, user: discord.User, *, message: str):
 
 
 @bot.command()
-@is_mod()
 async def toggle_crime(ctx):
+    if not ctx.guild:
+        await ctx.send("This command can only be used in a server.")
+        return
+
+    if ctx.author.id != ctx.guild.owner_id:
+        await ctx.send("Only the server owner can use this command.")
+        return
+
     guildid = ctx.guild.id
 
     async with aiosqlite.connect(DB_PATH) as db:
