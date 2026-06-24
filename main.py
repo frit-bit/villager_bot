@@ -129,6 +129,7 @@ async def help(interaction: discord.Interaction):
             "`/deposit [amount]` Move coins from wallet to bank\n"
             "`/work [job]` Earn coins with a 5-minute cooldown\n"
             "`/diceroll <amount> <number>` Bet coins on a dice roll\n"
+            "`/steal <user> <amount>` Steal up to 25% of someone's wallet\n"
             "`/addcoins <user> <amount>` Staff command\n"
             "`/removecoins <user> <amount>` Staff command"
         ),
@@ -490,6 +491,87 @@ async def removecoins(interaction: discord.Interaction, user:Member, amount:int)
             color=discord.Color.red()
         )
         embed.set_thumbnail(url=user.display_avatar.url)
+        await interaction.followup.send(embed=embed)
+
+
+@bot.tree.command(name="steal", description="Steal coins from someone else's wallet!")
+@app_commands.describe(user="The user you want to steal from", amount="The amount of coins you want to steal (not more than 25% of total balance)")
+async def steal(interaction: discord.Interaction, user: Member, amount: int):
+    if amount <= 0:
+        await interaction.response.send_message("You must select a positive integer!", ephemeral=True)
+        return
+    if user.id == interaction.user.id:
+        await interaction.response.send_message("You cannot steal from yourself!", ephemeral=True)
+        return
+    if user.bot:
+        await interaction.response.send_message("You cannot steal from bots!", ephemeral=True)
+        return
+    
+    await interaction.response.defer(thinking=True)
+
+    thief = interaction.user
+    thief_id = thief.id
+    guild_id = interaction.guild.id
+
+    async with aiosqlite.connect(DB_PATH) as db:
+        settings_cursor = await db.execute(
+                "SELECT crime_enabled FROM guild_settings WHERE guild_id = ?",
+                (guild_id,)
+        )
+        settings_row = await settings_cursor.fetchone()
+        if settings_row is not None and settings_row[0] == 0:
+            await interaction.followup.send("Crime is disabled in this server!")
+            return
+
+        target_cursor = await db.execute(
+                "SELECT balance FROM economy WHERE user_id = ? AND guild_id = ?",
+                (user.id, guild_id)
+        )
+        target_row = await target_cursor.fetchone()
+        target_wallet = 0 if target_row is None else target_row[0]
+        max_steal = int(target_wallet * 0.25)
+
+        if max_steal < 1:
+            await interaction.followup.send("This user does not have enough coins in their wallet for you to steal!", ephemeral=True)
+            return
+        if amount > max_steal:
+            await interaction.followup.send("You cannot steal more than 25% of someone's wallet!", ephemeral=True)
+            return
+
+        thief_cursor = await db.execute(
+                "SELECT balance FROM economy WHERE user_id = ? AND guild_id = ?",
+                (thief_id, guild_id)
+        )
+        thief_row = await thief_cursor.fetchone()
+        thief_wallet = 10 if thief_row is None else thief_row[0]
+
+        if thief_row is None:
+            await db.execute(
+                "INSERT INTO economy (user_id, guild_id, balance) VALUES (?, ?, ?)",
+                (thief_id, guild_id, thief_wallet)
+            )
+
+        new_target_wallet = target_wallet - amount
+        new_thief_wallet = thief_wallet + amount
+
+        await db.execute(
+                "UPDATE economy SET balance = ? WHERE user_id = ? AND guild_id = ?",
+                (new_target_wallet, user.id, guild_id)
+        )
+        await db.execute(
+                "UPDATE economy SET balance = ? WHERE user_id = ? AND guild_id = ?",
+                (new_thief_wallet, thief_id, guild_id)
+        )
+        await db.commit()
+
+        embed = discord.Embed(
+            title="Successful Steal",
+            description=f"{thief.mention} stole {amount} coins from {user.mention}.",
+            color=discord.Color.dark_red()
+        )
+        embed.add_field(name="Your New Wallet", value=f"{new_thief_wallet} coins", inline=True)
+        embed.add_field(name=f"{user.display_name}'s New Wallet", value=f"{new_target_wallet} coins", inline=True)
+        embed.set_thumbnail(url=thief.display_avatar.url)
         await interaction.followup.send(embed=embed)
 
 @bot.tree.command(name="diceroll", description="Roll a 6-sided dice for money!")
