@@ -1067,7 +1067,7 @@ async def on_message(message):
     is_reply_to_bot = replied_message and replied_message.author == bot.user
 
     if not isinstance(message.channel, discord.DMChannel) and (
-        bot_mentioned or is_reply_to_bot or random.random() < 0.10
+        bot_mentioned or is_reply_to_bot or random.random() < 0.25
     ):
         try:
             try:
