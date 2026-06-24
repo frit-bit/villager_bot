@@ -8,6 +8,7 @@ from discord import app_commands, Member, User
 from datetime import datetime, timedelta
 from discord.ext import tasks
 from dotenv import load_dotenv
+from groq import Groq
 
 work_cooldowns = {}
 
@@ -172,6 +173,35 @@ async def help(interaction: discord.Interaction):
     embed.set_footer(text="Start typing / in Discord to browse commands and options.")
 
     await interaction.response.send_message(embed=embed)
+
+
+@bot.tree.command(name="chat", description="Ask anything! (Uses Groq free tier, usage limits apply)")
+@app_commands.describe(prompt="Type what you want to ask here.")
+async def chat(interaction: discord.Interaction, prompt: str):
+    await interaction.response.defer(thinking=True)
+
+    client = Groq()
+    completion = client.chat.completions.create(
+            model="meta-llama/llama-4-scout-17b-16e-instruct",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are Villager Bot, a Discord bot. Be casual and concise like texting a friend. Very little enthusiasm, no exclamation points, no 'bruh' every sentence. Short responses only. Occasionally use slang but don't overdo it."
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            temperature=1,
+            max_completion_tokens=1024,
+            top_p=1,
+            stream=False,
+            stop=None
+    )
+
+    response_text = completion.choices[0].message.content or "I couldn't generate a response."
+    await interaction.followup.send(response_text[:2000])
 
 
 @bot.tree.command(name="balance", description="Check someone's coin balance")
@@ -453,7 +483,7 @@ async def removecoins(interaction: discord.Interaction, user:Member, amount:int)
         return
     
     if amount<1:
-        await interaction.response.send_message("You must specifiy a positive integer!", ephemeral=True)
+        await interaction.response.send_message("You must specify a positive integer!", ephemeral=True)
         return
     
     await interaction.response.defer(thinking=True)
