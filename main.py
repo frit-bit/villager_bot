@@ -120,7 +120,7 @@ def is_mod():
 async def help(interaction: discord.Interaction):
     embed = discord.Embed(
         title="Villager Bot Help",
-        description="Slash commands currently available in this server.",
+        description="Commands currently available in this server.",
         color=discord.Color.orange()
     )
     embed.add_field(
@@ -128,11 +128,28 @@ async def help(interaction: discord.Interaction):
         value=(
             "`/balance [user]` Check a wallet and bank total\n"
             "`/deposit [amount]` Move coins from wallet to bank\n"
+            "`/withdraw [amount]` Move coins from bank to wallet\n"
             "`/work [job]` Earn coins with a 5-minute cooldown\n"
+            "`/resign` Leave your current job\n"
             "`/diceroll <amount> <number>` Bet coins on a dice roll\n"
-            "`/steal <user> <amount>` Steal up to 25% of someone's wallet\n"
+            "`/steal <user> <amount>` Steal up to 25% of someone's wallet"
+        ),
+        inline=False
+    )
+    embed.add_field(
+        name="AI",
+        value="`/chat <prompt>` Ask Villager Bot a question",
+        inline=False
+    )
+    embed.add_field(
+        name="Staff and Owner",
+        value=(
             "`/addcoins <user> <amount>` Staff command\n"
-            "`/removecoins <user> <amount>` Staff command"
+            "`/removecoins <user> <amount>` Staff command\n"
+            "`/speak <message> [channel]` Make the bot speak\n"
+            "`v?toggle_crime` Staff command to enable or disable `/steal`\n"
+            "`v?dm <user> <message>` Owner command\n"
+            "`v?sync` Owner command"
         ),
         inline=False
     )
@@ -154,7 +171,7 @@ async def help(interaction: discord.Interaction):
         value=(
             "`/ping` Check bot latency\n"
             "`/serverinfo` View server details\n"
-            "`/speak <message> [channel]` Make the bot speak"
+            "`/help` Show this help menu"
         ),
         inline=False
     )
@@ -162,6 +179,7 @@ async def help(interaction: discord.Interaction):
         name="Notes",
         value=(
             "Coins are stored per server, but bank balance is global.\n"
+            "Crime commands can be toggled per server.\n"
             "Some commands are restricted to staff or the bot owner."
         ),
         inline=False
