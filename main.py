@@ -201,7 +201,8 @@ async def chat(interaction: discord.Interaction, prompt: str):
     await interaction.response.defer(thinking=True)
 
     client = Groq()
-    completion = client.chat.completions.create(
+    completion = await asyncio.to_thread(
+            client.chat.completions.create,
             model="meta-llama/llama-4-scout-17b-16e-instruct",
             messages=[
                 {
@@ -1066,8 +1067,10 @@ async def on_message(message):
 
     is_reply_to_bot = replied_message and replied_message.author == bot.user
 
-    if not isinstance(message.channel, discord.DMChannel) and (
-        bot_mentioned or is_reply_to_bot or random.random() < 0.25
+    if (
+        not message.author.bot
+        and not isinstance(message.channel, discord.DMChannel)
+        and (bot_mentioned or is_reply_to_bot or random.random() < 0.25)
     ):
         try:
             try:
@@ -1080,13 +1083,14 @@ async def on_message(message):
             history = [
                 {
                     "role": "assistant" if msg.author == bot.user else "user",
-                    "content": msg.content or msg.clean_content or " "
+                    "content": msg.clean_content or msg.content or " "
                 }
                 for msg in messages
             ]
 
             client = Groq()
-            completion = client.chat.completions.create(
+            completion = await asyncio.to_thread(
+                client.chat.completions.create,
                 model="meta-llama/llama-4-scout-17b-16e-instruct",
                 messages=[
                     {
