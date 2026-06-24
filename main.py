@@ -1056,7 +1056,7 @@ async def on_message(message):
             f.write(log_entry)
     
     # chat response AI
-    if not isinstance(message.channel, discord.DMChannel) and random.random() < 0.90:
+    if not isinstance(message.channel, discord.DMChannel) and random.random() < 0.10:
         messages = [msg async for msg in message.channel.history(limit=100)]
         messages.reverse()
         history = [
