@@ -58,7 +58,7 @@ The bot initializes SQLite tables and syncs slash commands when it starts.
 | Command | Description |
 |---|---|
 | `/chat <prompt>` | Ask Villager Bot a question using Groq's free tier |
-| Mention/reply chat | The bot can respond when mentioned, when replied to, or randomly in server chat |
+| Mention/reply chat | The bot can respond when mentioned, when replied to, or randomly in server chat when AI conversation is enabled |
 
 ### Fun
 | Command | Description |
@@ -85,6 +85,7 @@ These use the `v?` prefix instead of slash commands.
 | Command | Description |
 |---|---|
 | `v?toggle_crime` | Enable or disable `/steal` in the current server *(server owner only)* |
+| `v?toggle-aiconvo` | Enable or disable AI channel replies in the current server *(server owner only)* |
 | `v?dm <user> <message>` | DM a user as the bot *(owner-only)* |
 | `v?sync` | Manually sync slash commands *(owner-only)* |
 
@@ -96,7 +97,7 @@ The bot uses a local SQLite database to store economy data:
 
 - `economy` stores each user's wallet and job per server
 - `global_bank` stores each user's cross-server bank balance
-- `guild_settings` stores server-level settings, including whether crime is enabled
+- `guild_settings` stores server-level settings, including whether crime and AI conversation are enabled
 - `message_logs.log` stores DM logs from non-owner users until the periodic cleanup runs
 
 ---
@@ -104,10 +105,11 @@ The bot uses a local SQLite database to store economy data:
 ## Notes
 
 - DMs sent to the bot are logged, except owner DMs. Logs are cleared every ~6 months, earlier if the bot is restarted.
-- AI responses use Groq's `meta-llama/llama-4-scout-17b-16e-instruct` model.
-- In server chat, the bot can respond when mentioned, when replied to, or by random chance.
+- AI responses use Groq's `llama-3.3-70b-versatile` model.
+- In server chat, the bot can respond when mentioned, when replied to, or by an 8% random chance when enabled.
 - The dice roll is intentionally weighted (win chance is ~33%).
 - Coin wallets never drop below 1, so you can keep using the economy commands
 - First time using `/work` requires specifying a job; after that it's locked in
 - `/steal` can take at most 25% of a user's wallet and can be disabled by the server owner with `v?toggle_crime`
+- AI channel replies can be disabled by the server owner with `v?toggle-aiconvo`
 - Slash commands are synced automatically when the bot starts

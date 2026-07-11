@@ -20,6 +20,7 @@ if not TOKEN:
     raise ValueError("DISCORD_BOT_TOKEN environment variable is not set.")
 
 DB_PATH = "bot_data.db"
+AI_CHAT_RESPONSE_CHANCE = 0.08
 
 system_prompt = "You are Villager Bot, a Discord bot. Be casual and concise like texting a friend. Very little enthusiasm except EXTREMELY rarely in some cases where it's appropriate, no exclamation points, no 'bruh' every sentence. Short responses only. Occasionally use slang but don't overdo it."
 
@@ -45,9 +46,17 @@ async def init_db():
         await db.execute('''
             CREATE TABLE IF NOT EXISTS guild_settings (
                 guild_id INTEGER PRIMARY KEY,
-                crime_enabled INTEGER DEFAULT 1
+                crime_enabled INTEGER DEFAULT 1,
+                ai_convo_enabled INTEGER DEFAULT 1
                 )
                 ''')
+        cursor = await db.execute("PRAGMA table_info(guild_settings)")
+        columns = [row[1] for row in await cursor.fetchall()]
+        if "ai_convo_enabled" not in columns:
+            await db.execute(
+                "ALTER TABLE guild_settings ADD COLUMN ai_convo_enabled INTEGER DEFAULT 1"
+            )
+        await db.commit()
         print("Database Initialized Successfully.")
 
 # Clear Message Logs every month
@@ -154,6 +163,7 @@ async def help(interaction: discord.Interaction):
             "`/removecoins <user> <amount>` Remove coins from a wallet\n"
             "`/speak <message> [channel]` Make the bot speak\n"
             "`v?toggle_crime` Enable or disable `/steal` for this server\n"
+            "`v?toggle-aiconvo` Enable or disable AI channel replies\n"
             "`v?dm <user> <message>` DM a user as the bot\n"
             "`v?sync` Manually sync slash commands"
         ),
@@ -186,6 +196,7 @@ async def help(interaction: discord.Interaction):
         value=(
             "Coins are stored per server, but bank balance is global.\n"
             "Only the server owner can toggle crime commands.\n"
+            "Only the server owner can toggle AI channel replies.\n"
             "Staff commands require Kick Members permission or bot owner.\n"
             "`v?dm` and `v?sync` are owner-only."
         ),
@@ -208,7 +219,7 @@ async def chat(interaction: discord.Interaction, prompt: str):
     client = Groq()
     completion = await asyncio.to_thread(
             client.chat.completions.create,
-            model="meta-llama/llama-4-scout-17b-16e-instruct",
+            model="llama-3.3-70b-versatile",
             messages=[
                 {
                     "role": "system",
@@ -1022,6 +1033,48 @@ async def toggle_crime(ctx):
         await ctx.send(msg)
 
        
+@bot.command(name="toggle-aiconvo")
+async def toggle_aiconvo(ctx):
+    if not ctx.guild:
+        await ctx.send("This command can only be used in a server.")
+        return
+
+    if ctx.author.id != ctx.guild.owner_id:
+        await ctx.send("Only the server owner can use this command.")
+        return
+
+    guildid = ctx.guild.id
+
+    async with aiosqlite.connect(DB_PATH) as db:
+        cursor = await db.execute(
+            "SELECT ai_convo_enabled FROM guild_settings WHERE guild_id = ?",
+            (guildid,)
+        )
+        result = await cursor.fetchone()
+
+        if result is None:
+            await db.execute(
+                "INSERT INTO guild_settings (guild_id, ai_convo_enabled) VALUES (?,?)",
+                (guildid, 0)
+            )
+            msg = "AI channel replies have been disabled in this server."
+        elif result[0] == 1:
+            await db.execute(
+                "UPDATE guild_settings SET ai_convo_enabled = ? WHERE guild_id = ?",
+                (0, guildid)
+            )
+            msg = "AI channel replies have been disabled in this server."
+        else:
+            await db.execute(
+                "UPDATE guild_settings SET ai_convo_enabled = ? WHERE guild_id = ?",
+                (1, guildid)
+            )
+            msg = "AI channel replies have been enabled in this server."
+
+        await db.commit()
+        await ctx.send(msg)
+
+
 @bot.command()
 @commands.is_owner()
 async def sync(ctx):
@@ -1078,11 +1131,25 @@ async def on_message(message):
             print(f"Could not fetch replied message: {type(e).__name__}: {e}")
 
     is_reply_to_bot = replied_message and replied_message.author == bot.user
-
-    if (
+    should_attempt_ai_response = (
         not message.author.bot
         and not isinstance(message.channel, discord.DMChannel)
-        and (bot_mentioned or is_reply_to_bot or random.random() < 0.25)
+        and (bot_mentioned or is_reply_to_bot or random.random() < AI_CHAT_RESPONSE_CHANCE)
+    )
+
+    ai_convo_enabled = True
+    if should_attempt_ai_response and message.guild:
+        async with aiosqlite.connect(DB_PATH) as db:
+            cursor = await db.execute(
+                "SELECT ai_convo_enabled FROM guild_settings WHERE guild_id = ?",
+                (message.guild.id,)
+            )
+            result = await cursor.fetchone()
+            ai_convo_enabled = result is None or result[0] == 1
+
+    if (
+        should_attempt_ai_response
+        and ai_convo_enabled
     ):
         try:
             try:
@@ -1103,7 +1170,7 @@ async def on_message(message):
             client = Groq()
             completion = await asyncio.to_thread(
                 client.chat.completions.create,
-                model="meta-llama/llama-4-scout-17b-16e-instruct",
+                model="llama-3.3-70b-versatile",
                 messages=[
                     {
                         "role": "system",
