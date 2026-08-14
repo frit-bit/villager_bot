@@ -3,6 +3,7 @@ import discord
 import asyncio
 import random
 import aiosqlite
+from aiohttp import web
 from discord.ext import commands
 from discord import app_commands, Member, User
 from datetime import datetime, timedelta
@@ -71,10 +72,30 @@ async def clear_mlogs():
 
 
 
+HEALTH_PORT = int(os.getenv("HEALTH_PORT", 8080))
+
+
+async def health(request):
+    if bot.is_ready() and bot.latency < 1.0:
+        return web.json_response({"status": "ok", "latency": bot.latency}, status=200)
+    return web.json_response({"status": "unhealthy"}, status=503)
+
+
+async def start_health_server():
+    app = web.Application()
+    app.router.add_get("/health", health)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", HEALTH_PORT)
+    await site.start()
+    print(f"✅ Health check server running on port {HEALTH_PORT}")
+
+
 class Villager(commands.Bot):
     def __init__(self):
         intents = discord.Intents.all()
         self.is_syncing = False
+        self.health_server_started = False
         super().__init__(
             command_prefix='v?',
             intents=intents,
@@ -110,6 +131,10 @@ class Villager(commands.Bot):
 
         if not clear_mlogs.is_running():
             clear_mlogs.start()
+
+        if not self.health_server_started:
+            self.health_server_started = True
+            self.loop.create_task(start_health_server())
 
         for guild in self.guilds:
             print(
@@ -219,7 +244,7 @@ async def chat(interaction: discord.Interaction, prompt: str):
     client = Groq()
     completion = await asyncio.to_thread(
             client.chat.completions.create,
-            model="llama-3.3-70b-versatile",
+            model="openai/gpt-oss-120b",
             messages=[
                 {
                     "role": "system",
