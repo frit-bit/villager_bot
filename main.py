@@ -1195,7 +1195,7 @@ async def on_message(message):
             client = Groq()
             completion = await asyncio.to_thread(
                 client.chat.completions.create,
-                model="llama-3.3-70b-versatile",
+                model="openai/gpt-oss-120b",
                 messages=[
                     {
                         "role": "system",
